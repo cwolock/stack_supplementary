@@ -1,13 +1,14 @@
 #!/usr/local/bin/Rscript
+.libPaths(c(
+  "/home/cwolock/R_lib",
+  .libPaths()
+))
 suppressMessages(library(survML))
 suppressMessages(library(survSuperLearner))
 suppressMessages(library(SuperLearner))
 suppressMessages(library(survival))
 suppressMessages(library(argparse))
 suppressMessages(library(dplyr))
-
-source("/home/users/cwolock/stack_supplementary/sims/prospective_notruncation/do_one.R")
-source("/home/users/cwolock/stack_supplementary/sims/generate_data.R")
 
 parser <- ArgumentParser()
 parser$add_argument("--sim-name",
@@ -21,7 +22,18 @@ parser$add_argument("--nreps-per-job",
                     type = "double",
                     default = 1,
                     help = "number of replicates per job")
+parser$add_argument("--scheduler",
+                    default = "sge",
+                    help = "Job scheduler")
 args <- parser$parse_args()
+
+if (args$scheduler == "slurm"){
+  source("/home/cwolock/stack_supplementary/sims/prospective_notruncation/do_one.R")
+  source("/home/cwolock/stack_supplementary/sims/generate_data.R")
+} else if (scheduler == "sge"){
+  source("/home/users/cwolock/stack_supplementary/sims/prospective_notruncation/do_one.R")
+  source("/home/users/cwolock/stack_supplementary/sims/generate_data.R")
+}
 
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
@@ -36,7 +48,11 @@ param_grid <- expand.grid(mc_id = 1:njobs_per_combo,
                           n_train = n_trains,
                           estimator = estimators)
 
-job_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
+if (scheduler == "slurm"){
+  job_id <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+} else if (scheduler == "sge"){
+  job_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
+}
 
 current_dynamic_args <- param_grid[job_id, ]
 
