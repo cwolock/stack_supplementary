@@ -22,6 +22,9 @@ parser$add_argument("--nreps-per-job",
                     type = "double",
                     default = 100,
                     help = "number of replicates per job")
+parser$add_argument("--scheduler",
+                    default = "sge",
+                    help = "Job scheduler")
 args <- parser$parse_args()
 
 if (args$scheduler == "slurm"){
@@ -56,7 +59,6 @@ set.seed(current_seed)
 output <- replicate(args$nreps_per_job,
                     do_one(n_train = current_dynamic_args$n_train,
                            estimator = current_dynamic_args$estimator,
-                           dimension = current_dynamic_args$dimension,
                            dgp = current_dynamic_args$dgp),
                     simplify = FALSE)
 sim_output <- lapply(as.list(1:length(output)),
