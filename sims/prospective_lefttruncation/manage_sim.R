@@ -10,14 +10,6 @@ suppressMessages(library(survival))
 suppressMessages(library(argparse))
 suppressMessages(library(dplyr))
 
-if (args$scheduler == "slurm"){
-  source("/home/cwolock/stack_supplementary/sims/prospective_lefttruncation/do_one.R")
-  source("/home/cwolock/stack_supplementary/sims/generate_data.R")
-} else if (args$scheduler == "sge"){
-  source("/home/users/cwolock/stack_supplementary/sims/prospective_lefttruncation/do_one.R")
-  source("/home/users/cwolock/stack_supplementary/sims/generate_data.R")
-}
-
 parser <- ArgumentParser()
 parser$add_argument("--sim-name",
                     default = "sim",
@@ -30,7 +22,18 @@ parser$add_argument("--nreps-per-job",
                     type = "double",
                     default = 10,
                     help = "number of replicates per job")
+parser$add_argument("--scheduler",
+                    default = "sge",
+                    help = "Job scheduler")
 args <- parser$parse_args()
+
+if (args$scheduler == "slurm"){
+  source("/home/cwolock/stack_supplementary/sims/prospective_lefttruncation/do_one.R")
+  source("/home/cwolock/stack_supplementary/sims/generate_data.R")
+} else if (args$scheduler == "sge"){
+  source("/home/users/cwolock/stack_supplementary/sims/prospective_lefttruncation/do_one.R")
+  source("/home/users/cwolock/stack_supplementary/sims/generate_data.R")
+}
 
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
@@ -58,7 +61,6 @@ set.seed(current_seed)
 output <- replicate(args$nreps_per_job,
                     do_one(n_train = current_dynamic_args$n_train,
                            estimator = current_dynamic_args$estimator,
-                           dimension = current_dynamic_args$dimension,
                            dgp = current_dynamic_args$dgp),
                     simplify = FALSE)
 sim_output <- lapply(as.list(1:length(output)),
