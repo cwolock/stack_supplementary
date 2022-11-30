@@ -15,7 +15,6 @@ args <- parser$parse_args()
 
 ## set up directories for output, plots
 output_dir <- "output/"
-plots_dir <- "plots/"
 
 ## set up parameter grid
 n_trains <- c(250, 500, 750, 1000)
@@ -42,4 +41,4 @@ output_lst <- lapply(paste0(output_dir, names_to_try), readRDS)
 ## make it a matrix
 output_df <- do.call(rbind.data.frame, output_lst)
 
-saveRDS(output_df, paste0(sim_name, ".rds"))
+saveRDS(output_df, paste0(args$sim_name, ".rds"))

@@ -8,7 +8,7 @@ num_combos=48
 njobs=`expr $2 / $3 \* $num_combos`
 
 if [[ ${4} == "slurm" ]]; then
-  sbatch --array=1-$njobs -e ./iotrash/s-%A_%a.out -o ./iotrash/s-%A_%a.out -t 1-$njobs /home/cwolock/stack_supplementary/sims/retrospective/call_manage_sim.sh $1 $2 $3 $4
+  sbatch --array=1-$njobs -e ./iotrash/s-%A_%a.out -o ./iotrash/s-%A_%a.out /home/cwolock/stack_supplementary/sims/retrospective/call_manage_sim.sh $1 $2 $3 $4
 else
   qsub -cwd -l h="biostat-b34|biostat-b35|biostat-b36|biostat-b37" -l h_vmem=16G -e iotrash/ -o iotrash/ -t 1-$njobs /home/users/cwolock/stack_supplementary/sims/retrospective/call_manage_sim.sh $1 $2 $3 $4
 fi
