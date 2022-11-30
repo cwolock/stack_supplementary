@@ -30,7 +30,7 @@ args <- parser$parse_args()
 if (args$scheduler == "slurm"){
   source("/home/cwolock/stack_supplementary/sims/prospective_notruncation/do_one.R")
   source("/home/cwolock/stack_supplementary/sims/generate_data.R")
-} else if (scheduler == "sge"){
+} else if (args$scheduler == "sge"){
   source("/home/users/cwolock/stack_supplementary/sims/prospective_notruncation/do_one.R")
   source("/home/users/cwolock/stack_supplementary/sims/generate_data.R")
 }
@@ -48,9 +48,9 @@ param_grid <- expand.grid(mc_id = 1:njobs_per_combo,
                           n_train = n_trains,
                           estimator = estimators)
 
-if (scheduler == "slurm"){
+if (args$scheduler == "slurm"){
   job_id <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-} else if (scheduler == "sge"){
+} else if (args$scheduler == "sge"){
   job_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
 }
 
@@ -61,7 +61,6 @@ set.seed(current_seed)
 output <- replicate(args$nreps_per_job,
                     do_one(n_train = current_dynamic_args$n_train,
                            estimator = current_dynamic_args$estimator,
-                           dimension = current_dynamic_args$dimension,
                            dgp = current_dynamic_args$dgp),
                     simplify = FALSE)
 sim_output <- lapply(as.list(1:length(output)),
