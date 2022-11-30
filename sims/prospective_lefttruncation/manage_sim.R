@@ -1,4 +1,8 @@
 #!/usr/local/bin/Rscript
+.libPaths(c(
+  "/home/cwolock/R_lib",
+  .libPaths()
+))
 suppressMessages(library(survML))
 suppressMessages(library(survSuperLearner))
 suppressMessages(library(SuperLearner))
@@ -6,8 +10,13 @@ suppressMessages(library(survival))
 suppressMessages(library(argparse))
 suppressMessages(library(dplyr))
 
-source("/home/users/cwolock/stack_supplementary/sims/prospective_lefttruncation/do_one.R")
-source("/home/users/cwolock/stack_supplementary/sims/generate_data.R")
+if (args$scheduler == "slurm"){
+  source("/home/cwolock/stack_supplementary/sims/prospective_lefttruncation/do_one.R")
+  source("/home/cwolock/stack_supplementary/sims/generate_data.R")
+} else if (args$scheduler == "sge"){
+  source("/home/users/cwolock/stack_supplementary/sims/prospective_lefttruncation/do_one.R")
+  source("/home/users/cwolock/stack_supplementary/sims/generate_data.R")
+}
 
 parser <- ArgumentParser()
 parser$add_argument("--sim-name",
@@ -36,7 +45,11 @@ param_grid <- expand.grid(mc_id = 1:njobs_per_combo,
                           n_train = n_trains,
                           estimator = estimators)
 
-job_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
+if (args$scheduler == "slurm"){
+  job_id <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+} else if (args$scheduler == "sge"){
+  job_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
+}
 
 current_dynamic_args <- param_grid[job_id, ]
 
