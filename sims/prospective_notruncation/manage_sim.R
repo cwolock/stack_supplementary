@@ -12,7 +12,7 @@ suppressMessages(library(dplyr))
 
 parser <- ArgumentParser()
 parser$add_argument("--sim-name",
-                    default = "sim",
+                    default = "prospective_notruncation",
                     help = "Name of simulation")
 parser$add_argument("--nreps-total",
                     type = "double",
@@ -40,13 +40,15 @@ dgps <- c("leftskew", "rightskew")
 estimators <- c("stackG_fine", "stackG_medium", "stackG_coarse",
                 "stackL_fine", "stackL_medium", "stackL_coarse",
                 "coxph", "survSL")
+cens <- c(0.25)
 
 njobs_per_combo <- args$nreps_total/args$nreps_per_job
 
 param_grid <- expand.grid(mc_id = 1:njobs_per_combo,
                           dgp = dgps,
                           n_train = n_trains,
-                          estimator = estimators)
+                          estimator = estimators,
+                          cens = cens)
 
 if (args$scheduler == "slurm"){
   job_id <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
@@ -61,7 +63,8 @@ set.seed(current_seed)
 output <- replicate(args$nreps_per_job,
                     do_one(n_train = current_dynamic_args$n_train,
                            estimator = current_dynamic_args$estimator,
-                           dgp = current_dynamic_args$dgp),
+                           dgp = current_dynamic_args$dgp,
+                           cens = current_dynamic_args$cens),
                     simplify = FALSE)
 sim_output <- lapply(as.list(1:length(output)),
                      function(x) tibble::add_column(output[[x]]))

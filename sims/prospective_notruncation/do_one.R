@@ -1,4 +1,4 @@
-do_one <- function(n_train, n_test=1000, estimator, dgp){
+do_one <- function(n_train, n_test=1000, estimator, dgp, cens){
 
   dimension <- 10
 
@@ -6,7 +6,8 @@ do_one <- function(n_train, n_test=1000, estimator, dgp){
   data_gen <- generate_data(n = n_train*6,
                             truncation = "none",
                             direction = "prospective",
-                            dgp = dgp)
+                            dgp = dgp,
+                            cens = cens)
 
   train <- data_gen$data
   censoring_rate <- mean(train$Delta)
@@ -20,11 +21,15 @@ do_one <- function(n_train, n_test=1000, estimator, dgp){
   data_gen <- generate_data(n = n_test,
                             truncation = "none",
                             direction = "prospective",
-                            dgp = dgp)
+                            dgp = dgp,
+                            cens = cens)
   test <- data_gen$data
-
+  theo_quant <- round(quantile(test$Y[test$Delta == 1], 
+                               probs = c(0.25, 0.5, 0.75, 0.9, 0.95)),
+                      digits = 0)
   # benchmarks
-  approx_times <- sort(unique(train$Y))
+  #approx_times <- sort(unique(train$Y))
+  approx_times <- sort(unique(train$Y[train$Delta == 1]))
   benchmark_times <- seq(0.1, 100, by = 0.1)
 
   # calculate true survival function values
@@ -37,10 +42,10 @@ do_one <- function(n_train, n_test=1000, estimator, dgp){
   }
 
   # set up tuning parameters
-  tune <- list(ntrees = c(200, 500),
+  tune <- list(ntrees = c(250, 500,1000),
                max_depth = c(1,2),
                minobspernode = 1,
-               shrinkage = 0.1)
+               shrinkage = 0.01)
   xgb_grid <- create.SL.xgboost(tune = tune)
   SL.library <- c("SL.mean", "SL.glm.interaction", "SL.earth",
                   "SL.gam", "SL.ranger", xgb_grid$names)
@@ -203,7 +208,7 @@ do_one <- function(n_train, n_test=1000, estimator, dgp){
                                               new.times = benchmark_times,
                                               event.SL.library = event.SL.library,
                                               cens.SL.library = cens.SL.library,
-                                              verbose = TRUE,
+                                              verbose = FALSE,
                                               obsWeights = NULL,
                                               control = list(initWeightAlg = "survSL.rfsrc"))
     est_df <- fit$event.SL.predict
@@ -216,9 +221,20 @@ do_one <- function(n_train, n_test=1000, estimator, dgp){
   ### wrap things up
   squared_errors <- (est_df - true_df_uni)^2
   MSE_uni <- mean(squared_errors)
-  output <- data.frame(MSE_uni = MSE_uni)
+  landmark_indices <- which(round(benchmark_times, digits = 2) %in% theo_quant)
+  landmark_estimates <- est_df[, landmark_indices]
+  landmark_truth <- true_df_uni[, landmark_indices]
+  landmark_sq_error <- (landmark_estimates - landmark_truth)^2
+  landmark_MSE <- colSums(landmark_sq_error)/n_test
+  output <- data.frame(MSE_uni = MSE_uni,
+                       landmark_MSE_25 = landmark_MSE[1],
+                       landmark_MSE_50 = landmark_MSE[2],
+                       landmark_MSE_75 = landmark_MSE[3],
+                       landmark_MSE_90 = landmark_MSE[4],
+                       landmark_MSE_95 = landmark_MSE[5])
   output$dgp <- rep(dgp, nrow(output))
   output$n_train <- rep(n_train, nrow(output))
+  output$cens <- rep(cens, nrow(output))
   output$estimator <- rep(estimator, nrow(output))
   output$censoring_rate <- rep(censoring_rate, nrow(output))
   output$truncation_rate <- rep(truncation_rate, nrow(output))

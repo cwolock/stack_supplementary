@@ -5,7 +5,7 @@ suppressMessages(library("tidyr"))
 suppressMessages(library("argparse"))
 
 parser <- ArgumentParser()
-parser$add_argument("--sim-name", default = "form_comparison",
+parser$add_argument("--sim-name", default = "proportional_hazards",
                     help = "name of simulation")
 parser$add_argument("--nreps-total", type = "double", default = 100,
                     help = "number of replicates for each set of params")
@@ -19,15 +19,18 @@ output_dir <- "output/"
 ## set up parameter grid
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
-estimators <- c("stackG_PI", "stackG_exp")
-
+estimators <- c("stackG_fine", "stackG_medium", "stackG_coarse",
+                "stackL_fine", "stackL_medium", "stackL_coarse",
+                "coxph")
+cens <- c(0.25)
 ## number of monte-carlo iterations per job
 nreps_per_combo <- args$nreps_total/args$nreps_per_job
 ## set up grid of parameters
 param_grid <- expand.grid(mc_id = 1:nreps_per_combo,
                           n_train = n_trains,
                           estimator = estimators,
-                          dgp = dgps)
+                          dgp = dgps,
+			  cens = cens)
 
 ## names of files to read in
 output_nms <- paste0(args$sim_name, "_", 1:dim(param_grid)[1], ".rds")
