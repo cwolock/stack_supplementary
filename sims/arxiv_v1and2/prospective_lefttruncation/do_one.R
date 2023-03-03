@@ -141,7 +141,7 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp){
     fits <- rep("stack_fit", length(out$fit$coef))
     algos <- names(out$fit$coef)
     weights <- out$fit$coef
-  } else if(estimator == "stackL_med"){ # local stacking, 0.025 grid
+  } else if(estimator == "stackL_medium"){ # local stacking, 0.025 grid
     out <- survML::stackL(time = train$Y,
                           event = train$Delta,
                           entry = train$W,
