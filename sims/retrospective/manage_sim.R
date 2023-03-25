@@ -12,7 +12,7 @@ suppressMessages(library(dplyr))
 
 parser <- ArgumentParser()
 parser$add_argument("--sim-name",
-                    default = "sim",
+                    default = "retrospective",
                     help = "Name of simulation")
 parser$add_argument("--nreps-total",
                     type = "double",

@@ -21,9 +21,7 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp){
                             direction = "retrospective",
                             dgp = dgp)
   test <- data_gen$data
-  theo_quant <- round(quantile(test$Y[test$Delta == 1], 
-                               probs = c(0.25, 0.5, 0.75, 0.9, 0.95)), 
-                      digits = 0)
+
   # benchmarks
   approx_times <- sort(unique(train$T))
   benchmark_times <- seq(0.1, 100, by = 0.1)
@@ -38,10 +36,10 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp){
   }
 
   # tuning parameters
-  tune <- list(ntrees = c(250, 500, 1000),
+  tune <- list(ntrees = c(200, 500),
                max_depth = c(1,2),
                minobspernode = 1,
-               shrinkage = 0.01)
+               shrinkage = 0.1)
   xgb_grid <- create.SL.xgboost(tune = tune)
   SL.library <- c("SL.mean", "SL.glm.interaction", "SL.earth",
                   "SL.gam", "SL.ranger", xgb_grid$names)
@@ -143,7 +141,7 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp){
     fits <- rep("stack_fit", length(out$fit$coef))
     algos <- names(out$fit$coef)
     weights <- out$fit$coef
-  } else if(estimator == "stackL_medium"){ # local stacking, 0.025 grid
+  } else if(estimator == "stackL_med"){ # local stacking, 0.025 grid
     out <- survML::stackL(time = train$T,
                           entry = train$W,
                           X = train[,1:dimension],
@@ -179,17 +177,7 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp){
   ### wrap things up
   squared_errors <- (est_df - true_df_uni)^2
   MSE_uni <- mean(squared_errors)
-  landmark_indices <- which(round(benchmark_times, digits = 2) %in% theo_quant)
-  landmark_estimates <- est_df[, landmark_indices]
-  landmark_truth <- true_df_uni[, landmark_indices]
-  landmark_sq_error <- (landmark_estimates - landmark_truth)^2
-  landmark_MSE <- colSums(landmark_sq_error)/n_test
-  output <- data.frame(MSE_uni = MSE_uni,
-		       landmark_MSE_25 = landmark_MSE[1],
-		       landmark_MSE_50 = landmark_MSE[2],
-		       landmark_MSE_75 = landmark_MSE[3],
-		       landmark_MSE_90 = landmark_MSE[4],
-	               landmark_MSE_95 = landmark_MSE[5])
+  output <- data.frame(MSE_uni = MSE_uni)
   output$dgp <- rep(dgp, nrow(output))
   output$censoring_rate <- rep(censoring_rate, nrow(output))
   output$truncation_rate <- rep(truncation_rate, nrow(output))

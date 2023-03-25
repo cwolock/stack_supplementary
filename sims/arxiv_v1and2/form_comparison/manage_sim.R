@@ -8,10 +8,17 @@ suppressMessages(library(SuperLearner))
 suppressMessages(library(argparse))
 suppressMessages(library(dplyr))
 
+if (args$scheduler == "slurm"){
+  source("/home/cwolock/stack_supplementary/sims/form_comparison/do_one.R")
+  source("/home/cwolock/stack_supplementary/sims/generate_data.R")
+} else if (args$scheduler == "sge"){
+  source("/home/users/cwolock/stack_supplementary/sims/form_comparison/do_one.R")
+  source("/home/users/cwolock/stack_supplementary/sims/generate_data.R")
+}
 
 parser <- ArgumentParser()
 parser$add_argument("--sim-name",
-                    default = "form_comparison",
+                    default = "sim",
                     help = "Name of simulation")
 parser$add_argument("--nreps-total",
                     type = "double",
@@ -21,28 +28,18 @@ parser$add_argument("--nreps-per-job",
                     type = "double",
                     default = 1,
                     help = "number of replicates per job")
-parser$add_argument("--scheduler", default = "sge", help = "Job scheduler")
 args <- parser$parse_args()
-
-if (args$scheduler == "slurm"){
-  source("/home/cwolock/stack_supplementary/sims/form_comparison/do_one.R")
-  source("/home/cwolock/stack_supplementary/sims/generate_data.R")
-} else if (args$scheduler == "sge"){
-  source("/home/users/cwolock/stack_supplementary/sims/form_comparison/do_one.R")
-  source("/home/users/cwolock/stack_supplementary/sims/generate_data.R")
-}
 
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
 estimators <- c("stackG_PI", "stackG_exp")
-cens <- c(0.25)
+
 njobs_per_combo <- args$nreps_total/args$nreps_per_job
 
 param_grid <- expand.grid(mc_id = 1:njobs_per_combo,
                           estimator = estimators,
                           dgp = dgps,
-                          n_train = n_trains,
-			  cens = cens)
+                          n_train = n_trains)
 
 if (args$scheduler == "slurm"){
   job_id <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
@@ -57,8 +54,7 @@ set.seed(current_seed)
 output <- replicate(args$nreps_per_job,
                     do_one(n_train = current_dynamic_args$n_train,
                            estimator = current_dynamic_args$estimator,
-                           dgp = current_dynamic_args$dgp,
-			   cens = current_dynamic_args$cens),
+                           dgp = current_dynamic_args$dgp),
                     simplify = FALSE)
 sim_output <- lapply(as.list(1:length(output)),
                      function(x) tibble::add_column(output[[x]]))
