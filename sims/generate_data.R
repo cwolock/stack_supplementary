@@ -21,8 +21,8 @@ generate_data <- function(n = 500,
   train$C <- rexp(n = n, rate = hazC)
   betaT1 <- 2*c(0, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 0, 0, 0, 0,0.5, 0.5, 0.5)
   a <- exp(betaT1[1] + betaT1[2]*train$X1 + betaT1[3]*train$X2 + betaT1[4]*train$X3 +
-             betaT1[5]*train$X4 + betaT1[6]*train$X5 + betaT1[7]*train$X1*train$X2 +
-             betaT1[8]*train$X3*train$X4 + betaT1[9]*train$X5*train$X1) + 2
+             betaT1[5]*train$X4 + betaT1[6]*train$X5 + betaT1[12]*train$X1*train$X2 +
+             betaT1[13]*train$X3*train$X4 + betaT1[14]*train$X5*train$X1) + 2
   b <- 2
   if (dgp == "leftskew"){
     train$T <- 100*rbeta(n = n, shape1 = a, shape2 = b)
