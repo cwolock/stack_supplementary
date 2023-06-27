@@ -1,7 +1,7 @@
 do_one <- function(n_train, n_test = 1000, estimator, dgp, cens){
-
+  
   dimension <- 10
-
+  
   # training data
   data_gen <- generate_data(n = n_train*6,
                             truncation = "covariate",
@@ -15,7 +15,7 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp, cens){
   train <- train[indices,] # b/c of truncation,
   # generate more samples than needed, then randomly select n_train
   true_S_T <- data_gen$true_S_T
-
+  
   # test data generated without truncation
   data_gen <- generate_data(n = n_test,
                             truncation = "none",
@@ -27,9 +27,9 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp, cens){
                                probs = c(0.25, 0.5, 0.75, 0.9, 0.95)),
                       digits = 0)
   # benchmarks
-  approx_times <- sort(unique(train$Y))
+  approx_times <- sort(unique(train$Y[train$Delta == 1]))
   benchmark_times <- seq(0.1, 100, by = 0.1)
-
+  
   # calculate true survival function values
   true_df_uni <- matrix(NA, nrow = nrow(test), ncol = length(benchmark_times))
   for (i in 1:length(benchmark_times)){
@@ -38,7 +38,7 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp, cens){
     }))
     true_df_uni[,i] <- vals
   }
-
+  
   # tuning parameters
   tune <- list(ntrees = c(250, 500, 1000),
                max_depth = c(1,2),
@@ -47,7 +47,7 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp, cens){
   xgb_grid <- create.SL.xgboost(tune = tune)
   SL.library <- c("SL.mean", "SL.glm.interaction", "SL.earth",
                   "SL.gam", "SL.ranger", xgb_grid$names)
-
+  
   start_time <- Sys.time()
   if (estimator == "stackG_fine"){ # global stacking, all times grid
     out <- survML::stackG(time = train$Y,
@@ -198,9 +198,27 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp, cens){
     fits <- NA
     algos <- NA
     weights <- NA
+  } else if (estimator == "LTRCforests"){
+    fit <- LTRCforests::ltrccif(survival::Surv(entry, time, event) ~ X1 + X2 + X3 + X4 + X5 + 
+                                  X6 + X7 + X8 + X9 + X10, 
+                                data = data.frame(time=train$Y,
+                                                  event=train$Delta,
+                                                  entry=train$W,
+                                                  train[,1:dimension],
+                                                  mtry = ceiling(sqrt(dimension))))
+    pred <- t(LTRCforests::predictProb(fit, 
+                                       newdata = data.frame(entry = test$W,
+                                                            time = test$Y,
+                                                            event = test$Delta,
+                                                            test[,1:dimension]), 
+                                       time.eval = benchmark_times)$survival.probs)
+    est_df <- pred
+    fits <- NA
+    algos <- NA
+    weights <- NA
   }
   end_time <- Sys.time()
-
+  
   ### wrap things up
   squared_errors <- (est_df - true_df_uni)^2
   MSE_uni <- mean(squared_errors)
@@ -227,5 +245,4 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp, cens){
   runtime <- difftime(end_time, start_time, units = "secs")
   output$runtime <- rep(runtime, nrow(output))
   return(output)
-
 }

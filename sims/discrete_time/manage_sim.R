@@ -39,7 +39,7 @@ n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
 estimators <- c("stackG_fine",
                 "stackL_fine",
-                "coxph")
+                "coxph", "LTRCforests")
 cens <- c(0.25)
 nbins <- c(10, 20, 50)
 

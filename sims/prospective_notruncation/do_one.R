@@ -28,7 +28,6 @@ do_one <- function(n_train, n_test=1000, estimator, dgp, cens){
                                probs = c(0.25, 0.5, 0.75, 0.9, 0.95)),
                       digits = 0)
   # benchmarks
-  #approx_times <- sort(unique(train$Y))
   approx_times <- sort(unique(train$Y[train$Delta == 1]))
   benchmark_times <- seq(0.1, 100, by = 0.1)
 
@@ -215,6 +214,41 @@ do_one <- function(n_train, n_test=1000, estimator, dgp, cens){
     fits <- rep("survSL_fit", length(fit$event.coef))
     algos <- names(fit$event.coef)
     weights <- names(fit$event.coef)
+  } else if (estimataor == "gam"){
+    fit <- mgcv::gam(time ~ s(X1) + s(X2) + X3 + X4 + s(X5) + s(X6)
+                     + s(X7) + s(X8) + s(X9) + s(X10), 
+                     family = mgcv::cox.ph(), 
+                     data = data.frame(time = train$Y,
+                                       event = train$Delta,
+                                       train[,1:dimension]),
+                     weights = event)
+    newX <- test[,1:dimension]
+    new.data <- data.frame(time=rep(benchmark_times, each = nrow(newX)))
+    for (col in names(newX)) new.data[[col]] <- rep(newX[[col]], length(benchmark_times))
+    pred <- predict(fit, newdata=new.data, type="response", se=FALSE)
+    pred <- matrix(pred, nrow = nrow(newX), ncol = length(benchmark_times))
+    est_df <- pred
+    fits <- NA
+    algos <- NA
+    weights <- NA
+  } else if (estimator == "LTRCforests"){
+    fit <- LTRCforests::ltrccif(survival::Surv(entry, time, event) ~ X1 + X2 + X3 + X4 + X5 + 
+                                  X6 + X7 + X8 + X9 + X10, 
+                                data = data.frame(time=train$Y,
+                                                  event=train$Delta,
+                                                  entry=train$W,
+                                                  train[,1:dimension]),
+                                mtry = ceiling(sqrt(dimension)))
+    pred <-t(LTRCforests::predictProb(fit, 
+                                      newdata = data.frame(entry = test$W,
+                                                           time = test$Y,
+                                                           event = test$Delta,
+                                                           test[,1:dimension]), 
+                                      time.eval = benchmark_times)$survival.probs)
+    est_df <- pred
+    fits <- NA
+    algos <- NA
+    weights <- NA
   }
   end_time <- Sys.time()
 

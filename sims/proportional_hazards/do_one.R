@@ -4,7 +4,7 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp, cens){
 
   # training data
   data_gen <- generate_data(n = n_train*6,
-                            truncation = "uniform",
+                            truncation = "covariate",
                             direction = "prospective",
                             dgp = dgp,
                             ph = TRUE,
@@ -29,7 +29,7 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp, cens){
                                probs = c(0.25, 0.5, 0.75, 0.9, 0.95)),
                       digits = 0)
   # benchmarks
-  approx_times <- sort(unique(train$Y))
+  approx_times <- sort(unique(train$Y[train$Delta == 1]))
   benchmark_times <- seq(0.1, 100, by = 0.1)
 
   # calculate true survival function values
@@ -196,6 +196,24 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp, cens){
                                  nrow=nrow(pred), 
                                  ncol=length(benchmark_times) - ncol(pred)))
     }
+    est_df <- pred
+    fits <- NA
+    algos <- NA
+    weights <- NA
+  } else if (estimator == "LTRCforests"){
+    fit <- LTRCforests::ltrccif(survival::Surv(entry, time, event) ~ X1 + X2 + X3 + X4 + X5 + 
+                                  X6 + X7 + X8 + X9 + X10, 
+                                data = data.frame(time=train$Y,
+                                                  event=train$Delta,
+                                                  entry=train$W,
+                                                  train[,1:dimension],
+                                                  mtry = ceiling(sqrt(dimension))))
+    pred <- t(LTRCforests::predictProb(fit, 
+                                       newdata = data.frame(entry = test$W, 
+                                                            time = test$Y,
+                                                            event = test$Delta,
+                                                            test[,1:dimension]), 
+                                       time.eval = benchmark_times)$survival.probs)
     est_df <- pred
     fits <- NA
     algos <- NA
