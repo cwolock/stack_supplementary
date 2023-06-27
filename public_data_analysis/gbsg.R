@@ -1,8 +1,3 @@
-.libPaths(c(
-  "/home/cwolock/R_lib",
-  .libPaths()
-))
-
 set.seed(123)
 
 library(survival)
@@ -38,17 +33,18 @@ Delta <- as.numeric(GBSG$status)
 
 landmark_t <- quantile(Y[Delta == 1], probs = c(0.5, 0.75, 0.9))
 
-folds <- sample(rep(seq_len(5), length = length(Y)))
+nfolds <- 5
+folds <- sample(rep(seq_len(nfolds), length = length(Y)))
 
-stackG_briers <- matrix(NA, nrow = length(landmark_t), ncol = 5)
-stackL_briers <- matrix(NA, nrow = length(landmark_t), ncol = 5)
-cox_briers <- matrix(NA, nrow = length(landmark_t), ncol = 5)
-km_briers <- matrix(NA, nrow = length(landmark_t), ncol = 5)
-naive_briers <- matrix(NA, nrow = length(landmark_t), ncol = 5)
-
-for (k in 1:5){
+stackG_briers <- matrix(NA, nrow = length(landmark_t), ncol = nfolds)
+stackL_briers <- matrix(NA, nrow = length(landmark_t), ncol = nfolds)
+cox_briers <- matrix(NA, nrow = length(landmark_t), ncol = nfolds)
+km_briers <- matrix(NA, nrow = length(landmark_t), ncol = nfolds)
+naive_briers <- matrix(NA, nrow = length(landmark_t), ncol = nfolds)
+rf_briers <- matrix(NA, nrow = length(landmark_t), ncol = nfolds)
+for (k in 1:nfolds){
   test_folds <- k
-  train_folds <- which(1:5 != k)
+  train_folds <- which(1:nfolds != k)
   
   train_indices <- which(folds %in% train_folds)
   test_indices <- which(folds %in% test_folds)
@@ -61,7 +57,6 @@ for (k in 1:5){
                      Delta = Delta[test_indices],
                      X[test_indices,])
   
-  
   tune <- list(ntrees = c(250, 500, 1000),
                max_depth = c(1,2),
                minobspernode = 1,
@@ -72,6 +67,20 @@ for (k in 1:5){
   
   approx_times <- quantile(sort(unique(Y)), probs = seq(0, 1, by = 0.01))
   
+  formula <- paste0("survival::Surv(entry, time, event) ~ ", 
+                    paste0( names(train[,-c(1,2)]), collapse = "+"))
+  rf_fit <- LTRCforests::ltrccif(as.formula(formula), 
+                                 data = data.frame(time=train$Y,
+                                                   event=train$Delta,
+                                                   entry = 0,
+                                                   train[,-c(1,2)]), 
+                                 mtry = ceiling(sqrt(ncol(X))))
+  rf_pred <- t(LTRCforests::predictProb(rf_fit, 
+                                        newdata = data.frame(entry = 0, 
+                                                             time = test$Y,
+                                                             event = test$Delta,
+                                                             test[,-c(1,2)]), 
+                                        time.eval = approx_times)$survival.probs)
   stackG_out <- survML::stackG(time = train$Y,
                                event = train$Delta,
                                X = train[,-c(1,2)],
@@ -115,20 +124,14 @@ for (k in 1:5){
   
   cens_km <- survival::survfit(
     survival::Surv(time, event)~1,
-    data = as.data.frame(cbind(time=test$Y, event=1-test$Delta, 
-                               test[,-c(1:2)])))
-  cens_pred <- matrix(stats::stepfun(cens_km$time, 
-                                     c(1,cens_km$surv), 
-                                     right = FALSE)(approx_times),
+    data = as.data.frame(cbind(time=test$Y, event=1-test$Delta, test[,-c(1:2)])))
+  cens_pred <- matrix(stats::stepfun(cens_km$time, c(1,cens_km$surv), right = FALSE)(approx_times),
                       nrow=nrow(test), ncol = length(approx_times), byrow=TRUE)
   
   event_km <- survival::survfit(
     survival::Surv(time, event)~1,
-    data = as.data.frame(cbind(time=train$Y, event=train$Delta, 
-                               train[,-c(1:2)])))
-  event_km_pred <- matrix(stats::stepfun(event_km$time, 
-                                         c(1,event_km$surv),
-                                         right = FALSE)(approx_times),
+    data = as.data.frame(cbind(time=train$Y, event=train$Delta, train[,-c(1:2)])))
+  event_km_pred <- matrix(stats::stepfun(event_km$time, c(1,event_km$surv), right = FALSE)(approx_times),
                           nrow=nrow(test), ncol = length(approx_times), byrow=TRUE)
   
   compute_brier <- function(i, t, S_T_preds){
@@ -146,6 +149,14 @@ for (k in 1:5){
   }
   
   for (j in 1:length(landmark_t)){
+    tune <- list(ntrees = c(250, 500, 1000),
+                 max_depth = c(1,2),
+                 minobspernode = 1,
+                 shrinkage = 0.01)
+    xgb_grid <- create.SL.xgboost(tune = tune)
+    SL.library <- c("SL.mean", "SL.glm.interaction", "SL.earth",
+                    "SL.gam", "SL.ranger", xgb_grid$names)
+    
     outcome <- as.numeric(train$Y > landmark_t[j])
     design <- train[,-c(1,2)]
     naive <- SuperLearner::SuperLearner(Y = outcome,
@@ -188,11 +199,18 @@ for (k in 1:5){
                          t = landmark_t[j], 
                          S_T_preds = naive_preds)
     
+    rf_brier <- apply(X = matrix(1:nrow(test)), 
+                      MARGIN = 1, 
+                      FUN = compute_brier, 
+                      t = landmark_t[j], 
+                      S_T_preds = rf_pred)
+    
     stackG_briers[j,k] <- mean(stackG_brier)
     stackL_briers[j,k] <- mean(stackL_brier)
     cox_briers[j,k] <- mean(cox_brier)
     km_briers[j,k] <- mean(km_brier)
     naive_briers[j,k] <- mean(naive_brier)
+    rf_briers[j,k] <- mean(rf_brier)
   }
 }
 
@@ -200,6 +218,7 @@ results <- data.frame(stackG = rowMeans(stackG_briers),
                       stackL = rowMeans(stackL_briers),
                       cox = rowMeans(cox_briers),
                       naive = rowMeans(naive_briers),
+                      rf = rowMeans(rf_briers),
                       km = rowMeans(km_briers))
 
 saveRDS(results, "gbsg_results.rds")
