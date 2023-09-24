@@ -10,6 +10,20 @@ The appendix contains all technical details, as well as simulation results not i
 
 The code directory contains all code needed to replicate the simulations, analysis of publicly available data, and analysis of STEP data (although the STEP data themselves are not publicly available). 
 
+The code depends on the following `R` packages: 
+
+* `cowplot`: Available on CRAN
+* `ggpubr`: Available on CRAN
+* `LTRCforests`: Removed from CRAN as of March 2023. Available on Github at https://github.com/weichiyao/TimeVaryingData_LTRCforests/pkg/LTRCforests
+* `squash`: Available on CRAN
+* `SuperLearner`: Available on CRAN
+* `survival`: Available on CRAN
+* `survML`: Available on CRAN
+* `survSuperLearner`: Available on Github at https://github.com/tedwestling/survSuperLearner
+* `tidyverse`: Available on CRAN
+
+Note that `survSuperLearner` and `LTRCforests` are only used a comparator methods in the simulation studies. If you have difficulty installing them, you can simply leave those methods out. 
+
 ### Simulations
 
 These simulations were performed on a Linux cluster using the Slurm job scheduler. For different job schedulers, the code is flagged where changes may be needed. Running these simulations locally, while possible, will be extremely time consuming. 
