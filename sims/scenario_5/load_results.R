@@ -1,6 +1,6 @@
 #!/usr/local/bin/Rscript
 
-sim_name <- "form_comparison"
+sim_name <- "scenario_5"
 nreps_total <- 100
 nreps_per_job <- 1
 
@@ -10,15 +10,18 @@ output_dir <- "output/"
 ## set up parameter grid
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
-estimators <- c("stackG_PI", "stackG_exp")
+estimators <- c("stackG_fine", "stackL_fine", "coxph", "LTRCforests")
+nbins <- c(10, 20, 50)
 
 ## number of monte-carlo iterations per job
 nreps_per_combo <- nreps_total/nreps_per_job
+
 ## set up grid of parameters
 param_grid <- expand.grid(mc_id = 1:nreps_per_combo,
                           n_train = n_trains,
                           estimator = estimators,
-                          dgp = dgps)
+                          dgp = dgps,
+                          nbin = nbins)
 
 ## names of files to read in
 output_nms <- paste0(sim_name, "_", 1:dim(param_grid)[1], ".rds")

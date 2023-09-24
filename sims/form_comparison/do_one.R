@@ -1,4 +1,4 @@
-do_one <- function(n_train, n_test = 1000, estimator, dgp, cens){
+do_one <- function(n_train, n_test = 1000, estimator, dgp){
 
   dimension <- 10
 
@@ -6,8 +6,7 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp, cens){
   data_gen <- generate_data(n = n_train*6,
                             truncation = "covariate",
                             direction = "prospective",
-                            dgp = dgp,
-			    cens = cens)
+                            dgp = dgp)
   train <- data_gen$data
   indices <- sample(1:nrow(train), n_train)
   train <- train[indices,] # generate more samples than needed, then randomly select n_train
@@ -18,14 +17,13 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp, cens){
   data_gen <- generate_data(n = n_test,
                             truncation = "none",
                             direction = "prospective",
-                            dgp = dgp,
-			    cens = cens)
+                            dgp = dgp)
   test <- data_gen$data
-  theo_quant <- round(quantile(test$Y[test$Delta == 1], 
-                               probs = c(0.25, 0.5, 0.75, 0.9, 0.95)), 
+  theo_quant <- round(quantile(test$Y[test$Delta == 1],
+                               probs = c(0.5, 0.75, 0.9)),
                       digits = 0)
   # benchmarks
-  approx_times <- sort(unique(train$Y))
+  approx_times <- sort(unique(train$Y[train$Delta == 1]))
   benchmark_times <- seq(0.1, 100, by = 0.1)
 
   # calculate true survival function values
@@ -86,13 +84,10 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp, cens){
   landmark_sq_error <- (landmark_estimates - landmark_truth)^2
   landmark_MSE <- colSums(landmark_sq_error)/n_test
   output <- data.frame(MSE_uni = MSE_uni,
-		       landmark_MSE_25 = landmark_MSE[1],
-		       landmark_MSE_50 = landmark_MSE[2],
-		       landmark_MSE_75 = landmark_MSE[3],
-	               landmark_MSE_90 = landmark_MSE[4],
-                       landmark_MSE_95 = landmark_MSE[5])
+                       landmark_MSE_50 = landmark_MSE[1],
+                       landmark_MSE_75 = landmark_MSE[2],
+                       landmark_MSE_90 = landmark_MSE[3])
   output$dgp <- rep(dgp, nrow(output))
-  output$cens = rep(cens, nrow(output))
   output$n_train <- rep(n_train, nrow(output))
   output$estimator <- rep(estimator, nrow(output))
   incompat <- ifelse(est_df < 0 | est_df > 1, 1, 0)
