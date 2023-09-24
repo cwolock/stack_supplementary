@@ -28,7 +28,7 @@ parser$add_argument("--scheduler",
 args <- parser$parse_args()
 
 if (args$scheduler == "slurm"){
-  source("/home/cwolock/stack_supplementary/sims/prospective_notruncation/do_one.R")
+  source("/home/cwolock/stack_supplementary/sims/prospective_notruncation/xgboost/do_one.R")
   source("/home/cwolock/stack_supplementary/sims/generate_data.R")
 } else if (args$scheduler == "sge"){
   source("/home/users/cwolock/stack_supplementary/sims/prospective_notruncation/do_one.R")
@@ -37,9 +37,9 @@ if (args$scheduler == "slurm"){
 
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
-estimators <- c("stackG_fine", "stackG_medium", "stackG_coarse",
-                "stackL_fine", "stackL_medium", "stackL_coarse",
-                "coxph", "survSL")
+estimators <- c("stackG_fine", "stackG_fine_sub")#,
+                #"stackL_fine", "stackL_medium", "stackL_coarse",
+                #"coxph", "survSL")
 cens <- c(0.25)
 
 njobs_per_combo <- args$nreps_total/args$nreps_per_job

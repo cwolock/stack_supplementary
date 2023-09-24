@@ -19,7 +19,7 @@ output_dir <- "output/"
 ## set up parameter grid
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
-estimators <- c("stackG_fine", "stackG_medium", "stackG_coarse",
+estimators <- c(#"stackG_fine", "stackG_medium", "stackG_coarse",
                 "stackL_fine", "stackL_medium", "stackL_coarse")
 ## number of monte-carlo iterations per job
 nreps_per_combo <- args$nreps_total/args$nreps_per_job

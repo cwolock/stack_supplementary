@@ -36,7 +36,7 @@ if (args$scheduler == "slurm"){
 }
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
-estimators <- c("stackG_fine", "stackG_medium", "stackG_coarse",
+estimators <- c(#"stackG_fine", "stackG_medium", "stackG_coarse",
                 "stackL_fine", "stackL_medium", "stackL_coarse")
 
 njobs_per_combo <- args$nreps_total/args$nreps_per_job
