@@ -1,26 +1,34 @@
-do_one <- function(n_train, n_test=1000, estimator, dgp){
+do_one <- function(n_train, n_test=1000, estimator, dgp, cens){
 
   dimension <- 10
 
   # training data
-  data_gen <- generate_data(n = n_train,
+  data_gen <- generate_data(n = n_train*6,
                             truncation = "none",
                             direction = "prospective",
-                            dgp = dgp)
+                            dgp = dgp,
+                            cens = cens)
 
   train <- data_gen$data
+  censoring_rate <- mean(train$Delta)
+  truncation_rate <- 1 - nrow(train)/(6*n_train)
+  indices <- sample(1:nrow(train), n_train)
+  train <- train[indices,] # b/c of truncation,
+  # generate more samples than needed, then randomly select n_train
   true_S_T <- data_gen$true_S_T
 
-  # test data
+  # test data generated without truncation
   data_gen <- generate_data(n = n_test,
                             truncation = "none",
                             direction = "prospective",
-                            dgp = dgp)
+                            dgp = dgp,
+                            cens = cens)
   test <- data_gen$data
-  theo_quant <- round(quantile(test$Y[test$Delta == 1],
-                               probs = c(0.5, 0.75, 0.9)),
+  theo_quant <- round(quantile(test$Y[test$Delta == 1], 
+                               probs = c(0.25, 0.5, 0.75, 0.9, 0.95)),
                       digits = 0)
   # benchmarks
+  #approx_times <- sort(unique(train$Y))
   approx_times <- sort(unique(train$Y[train$Delta == 1]))
   benchmark_times <- seq(0.1, 100, by = 0.1)
 
@@ -34,13 +42,17 @@ do_one <- function(n_train, n_test=1000, estimator, dgp){
   }
 
   # set up tuning parameters
-  tune <- list(ntrees = c(250, 500, 1000),
+  tune <- list(ntrees = c(250, 500,1000),
                max_depth = c(1,2),
                minobspernode = 1,
                shrinkage = 0.01)
   xgb_grid <- create.SL.xgboost(tune = tune)
   SL.library <- c("SL.mean", "SL.glm.interaction", "SL.earth",
                   "SL.gam", "SL.ranger", xgb_grid$names)
+  tuning_params <- list(ntrees = c(100, 250, 500, 1000),
+			eta = c(0.01, 0.05, 0.1),
+			max_depth = c(1,2,3),
+			subsample = 1)
   start_time <- Sys.time()
   if (estimator == "stackG_fine"){ # global stacking, all times grid
     out <- survML::stackG(time = train$Y,
@@ -52,9 +64,60 @@ do_one <- function(n_train, n_test=1000, estimator, dgp){
                           bin_size = NULL,
                           time_basis = "continuous",
                           surv_form = "exp",
-                          SL_control = list(SL.library = SL.library,
-                                            V = 5))
+			  learner = "xgboost", 
+			  xgb_control = list(eval_metric = "logloss",
+					     objective = "binary:logistic",
+					     V = 5,
+					     tuning_params = tuning_params))
     est_df <- out$S_T_preds
+    print(out$fits$F_Y_1)
+    print(out$fits$F_Y_0)
+    fits <- names(out$fits[!sapply(out$fits, is.null)])
+    algos <- list()
+    weights <- list()
+    for (i in 1:length(fits)){
+      curr_fit <- fits[i]
+      curr_algos <- names(out$fits[[curr_fit]]$reg.object$coef)
+      curr_weights <- out$fits[[curr_fit]]$reg.object$coef
+      algos[[i]] <- curr_algos
+      weights[[i]] <- curr_weights
+    }
+    algos <- unlist(algos)
+    weights <- unlist(weights)
+    fits <- rep(fits, each = length(algos)/length(fits))
+  } else if (estimator == "stackG_fine_sub"){ # global stacking 0.025 grid
+    tuning_params$subsample <- 0.001
+    out <- survML::stackG(time = train$Y,
+                          event = train$Delta,
+                          X = train[,1:dimension],
+                          newX = test[,1:dimension],
+                          newtimes = benchmark_times,
+                          time_grid_approx = approx_times,
+                          bin_size = 0.025,
+                          time_basis = "continuous",
+                          surv_form = "exp",
+			  learner = "xgboost", 
+			  xgb_control = list(eval_metric = "logloss",
+					     objective = "binary:logistic",
+					     V = 5,
+					     tuning_params = tuning_params))
+    
+    print(out$fits$F_Y_1)
+    print(out$fits$F_Y_0)
+    est_df <- out$S_T_preds
+    fits <- names(out$fits[!sapply(out$fits, is.null)])
+    algos <- list()
+    weights <- list()
+    for (i in 1:length(fits)){
+      curr_fit <- fits[i]
+      curr_algos <- names(out$fits[[curr_fit]]$reg.object$coef)
+      curr_weights <- out$fits[[curr_fit]]$reg.object$coef
+      algos[[i]] <- curr_algos
+      weights[[i]] <- curr_weights
+    }
+    algos <- unlist(algos)
+    weights <- unlist(weights)
+    fits <- rep(fits, each = length(algos)/length(fits))
   } else if (estimator == "stackG_medium"){ # global stacking 0.025 grid
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
@@ -65,9 +128,28 @@ do_one <- function(n_train, n_test=1000, estimator, dgp){
                           bin_size = 0.025,
                           time_basis = "continuous",
                           surv_form = "exp",
-                          SL_control = list(SL.library = SL.library,
-                                            V = 5))
+			  learner = "xgboost", 
+			  xgb_control = list(eval_metric = "logloss",
+					     objective = "binary:logistic",
+					     V = 5,
+					     tuning_params = tuning_params))
+    
+    print(out$fits$F_Y_1)
+    print(out$fits$F_Y_0)
     est_df <- out$S_T_preds
+    fits <- names(out$fits[!sapply(out$fits, is.null)])
+    algos <- list()
+    weights <- list()
+    for (i in 1:length(fits)){
+      curr_fit <- fits[i]
+      curr_algos <- names(out$fits[[curr_fit]]$reg.object$coef)
+      curr_weights <- out$fits[[curr_fit]]$reg.object$coef
+      algos[[i]] <- curr_algos
+      weights[[i]] <- curr_weights
+    }
+    algos <- unlist(algos)
+    weights <- unlist(weights)
+    fits <- rep(fits, each = length(algos)/length(fits))
   } else if (estimator == "stackG_coarse"){ # global stacking, 0.1 grid
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
@@ -78,9 +160,27 @@ do_one <- function(n_train, n_test=1000, estimator, dgp){
                           bin_size = 0.1,
                           time_basis = "continuous",
                           surv_form = "exp",
-                          SL_control = list(SL.library = SL.library,
-                                            V = 5))
+			  learner = "xgboost",
+			  xgb_control = list(eval_metric = "logloss",
+					     objective = "binary:logistic",
+					     V = 5,
+					     tuning_params = tuning_params))
+    print(out$fits$F_Y_1)
+    print(out$fits$F_Y_0)
     est_df <- out$S_T_preds
+    fits <- names(out$fits[!sapply(out$fits, is.null)])
+    algos <- list()
+    weights <- list()
+    for (i in 1:length(fits)){
+      curr_fit <- fits[i]
+      curr_algos <- names(out$fits[[curr_fit]]$reg.object$coef)
+      curr_weights <- out$fits[[curr_fit]]$reg.object$coef
+      algos[[i]] <- curr_algos
+      weights[[i]] <- curr_weights
+    }
+    algos <- unlist(algos)
+    weights <- unlist(weights)
+    fits <- rep(fits, each = length(algos)/length(fits))
   } else if (estimator ==  "stackL_fine"){ # local stacking, all times grid
     out <- survML::stackL(time = train$Y,
                           event = train$Delta,
@@ -106,6 +206,9 @@ do_one <- function(n_train, n_test=1000, estimator, dgp){
                           SL_control = list(SL.library = SL.library,
                                             V = 5))
     est_df <- out$S_T_preds
+    fits <- rep("stack_fit", length(out$fit$coef))
+    algos <- names(out$fit$coef)
+    weights <- out$fit$coef
   } else if(estimator == "stackL_coarse"){ # local stacking, 0.1 grid
     out <- survML::stackL(time = train$Y,
                           event = train$Delta,
@@ -117,6 +220,9 @@ do_one <- function(n_train, n_test=1000, estimator, dgp){
                           SL_control = list(SL.library = SL.library,
                                             V = 5))
     est_df <- out$S_T_preds
+    fits <- rep("stack_fit", length(out$fit$coef))
+    algos <- names(out$fit$coef)
+    weights <- out$fit$coef
   } else if (estimator == "coxph"){ # Cox model
     fit <- survival::coxph(
       survival::Surv(entry, time, event) ~ .,
@@ -137,6 +243,9 @@ do_one <- function(n_train, n_test=1000, estimator, dgp){
                                  ncol=length(benchmark_times) - ncol(pred)))
     }
     est_df <- pred
+    fits <- NA
+    algos <- NA
+    weights <- NA
   } else if (estimator == "survSL"){ # surv Super Learner
     event.SL.library <- cens.SL.library <- c("survSL.km",
                                              "survSL.coxph",
@@ -156,35 +265,9 @@ do_one <- function(n_train, n_test=1000, estimator, dgp){
                                               obsWeights = NULL,
                                               control = list(initWeightAlg = "survSL.rfsrc"))
     est_df <- fit$event.SL.predict
-  } else if (estimataor == "gam"){
-    fit <- mgcv::gam(time ~ s(X1) + s(X2) + X3 + X4 + s(X5) + s(X6)
-                     + s(X7) + s(X8) + s(X9) + s(X10),
-                     family = mgcv::cox.ph(),
-                     data = data.frame(time = train$Y,
-                                       event = train$Delta,
-                                       train[,1:dimension]),
-                     weights = event)
-    newX <- test[,1:dimension]
-    new.data <- data.frame(time=rep(benchmark_times, each = nrow(newX)))
-    for (col in names(newX)) new.data[[col]] <- rep(newX[[col]], length(benchmark_times))
-    pred <- predict(fit, newdata=new.data, type="response", se=FALSE)
-    pred <- matrix(pred, nrow = nrow(newX), ncol = length(benchmark_times))
-    est_df <- pred
-  } else if (estimator == "LTRCforests"){
-    fit <- LTRCforests::ltrccif(survival::Surv(entry, time, event) ~ X1 + X2 + X3 + X4 + X5 +
-                                  X6 + X7 + X8 + X9 + X10,
-                                data = data.frame(time=train$Y,
-                                                  event=train$Delta,
-                                                  entry=train$W,
-                                                  train[,1:dimension]),
-                                mtry = ceiling(sqrt(dimension)))
-    pred <-t(LTRCforests::predictProb(fit,
-                                      newdata = data.frame(entry = test$W,
-                                                           time = test$Y,
-                                                           event = test$Delta,
-                                                           test[,1:dimension]),
-                                      time.eval = benchmark_times)$survival.probs)
-    est_df <- pred
+    fits <- rep("survSL_fit", length(fit$event.coef))
+    algos <- names(fit$event.coef)
+    weights <- names(fit$event.coef)
   }
   end_time <- Sys.time()
 
@@ -197,12 +280,20 @@ do_one <- function(n_train, n_test=1000, estimator, dgp){
   landmark_sq_error <- (landmark_estimates - landmark_truth)^2
   landmark_MSE <- colSums(landmark_sq_error)/n_test
   output <- data.frame(MSE_uni = MSE_uni,
-                       landmark_MSE_50 = landmark_MSE[1],
-                       landmark_MSE_75 = landmark_MSE[2],
-                       landmark_MSE_90 = landmark_MSE[3])
+                       landmark_MSE_25 = landmark_MSE[1],
+                       landmark_MSE_50 = landmark_MSE[2],
+                       landmark_MSE_75 = landmark_MSE[3],
+                       landmark_MSE_90 = landmark_MSE[4],
+                       landmark_MSE_95 = landmark_MSE[5])
   output$dgp <- rep(dgp, nrow(output))
   output$n_train <- rep(n_train, nrow(output))
+  output$cens <- rep(cens, nrow(output))
   output$estimator <- rep(estimator, nrow(output))
+  output$censoring_rate <- rep(censoring_rate, nrow(output))
+  output$truncation_rate <- rep(truncation_rate, nrow(output))
+  output$fits <- paste(fits, collapse = ",")
+  output$algos <- paste(algos, collapse = ",")
+  output$weights <- paste(weights, collapse = ",")
   runtime <- difftime(end_time, start_time, units = "secs")
   output$runtime <- rep(runtime, nrow(output))
   return(output)

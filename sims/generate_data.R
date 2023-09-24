@@ -3,6 +3,7 @@ generate_data <- function(n = 500,
                           dgp = "leftskew",
                           direction = "prospective",
                           ph = FALSE,
+			  cens = 0.25,
                           discretize = FALSE,
                           nbin = 10){
   if (!ph){
