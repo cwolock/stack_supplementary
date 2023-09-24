@@ -1,6 +1,6 @@
 #!/usr/local/bin/Rscript
 
-sim_name <- "form_comparison"
+sim_name <- "scenario_1"
 nreps_total <- 100
 nreps_per_job <- 1
 
@@ -10,7 +10,9 @@ output_dir <- "output/"
 ## set up parameter grid
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
-estimators <- c("stackG_PI", "stackG_exp")
+estimators <- c("stackG_fine", "stackG_medium", "stackG_coarse",
+                "stackL_fine", "stackL_medium", "stackL_coarse",
+                "coxph", "survSL", "gam", "LTRCforests")
 
 ## number of monte-carlo iterations per job
 nreps_per_combo <- nreps_total/nreps_per_job
@@ -28,5 +30,4 @@ names_to_try <- output_nms[which(output_nms %in% avail_nms)]
 output_lst <- lapply(paste0(output_dir, names_to_try), readRDS)
 ## make it a matrix
 output_df <- do.call(rbind.data.frame, output_lst)
-
 saveRDS(output_df, paste0(sim_name, ".rds"))

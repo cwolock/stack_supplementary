@@ -5,25 +5,29 @@
 ))
 suppressMessages(library(survML))
 suppressMessages(library(SuperLearner))
+suppressMessages(library(survival))
 suppressMessages(library(dplyr))
+suppressMessages(library(LTRCforests))
 
-sim_name <- "form_comparison"
+sim_name <- "scenario_2"
 nreps_total <- 100
 nreps_per_job <- 1
 
-source("/home/cwolock/stack_supplementary/sims/form_comparison/do_one.R")
+source("/home/cwolock/stack_supplementary/sims/scenario_2/do_one.R")
 source("/home/cwolock/stack_supplementary/sims/generate_data.R")
 
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
-estimators <- c("stackG_PI", "stackG_exp")
+estimators <- c("stackG_fine", "stackG_medium", "stackG_coarse",
+                "stackL_fine", "stackL_medium", "stackL_coarse",
+                "coxph", "LTRCforests")
 
 njobs_per_combo <- nreps_total/nreps_per_job
 
 param_grid <- expand.grid(mc_id = 1:njobs_per_combo,
-                          estimator = estimators,
                           dgp = dgps,
-                          n_train = n_trains)
+                          n_train = n_trains,
+                          estimator = estimators)
 
 job_id <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 

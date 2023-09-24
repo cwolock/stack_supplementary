@@ -3,27 +3,32 @@
   "/home/cwolock/R_lib",
   .libPaths()
 ))
+
 suppressMessages(library(survML))
 suppressMessages(library(SuperLearner))
+suppressMessages(library(survival))
 suppressMessages(library(dplyr))
+suppressMessages(library(LTRCforests))
 
-sim_name <- "form_comparison"
+sim_name <- "scenario_5"
 nreps_total <- 100
 nreps_per_job <- 1
 
-source("/home/cwolock/stack_supplementary/sims/form_comparison/do_one.R")
+source("/home/cwolock/stack_supplementary/sims/scenario_5/do_one.R")
 source("/home/cwolock/stack_supplementary/sims/generate_data.R")
 
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
-estimators <- c("stackG_PI", "stackG_exp")
+estimators <- c("stackG_fine", "stackL_fine", "coxph", "LTRCforests")
+nbins <- c(10, 20, 50)
 
 njobs_per_combo <- nreps_total/nreps_per_job
 
 param_grid <- expand.grid(mc_id = 1:njobs_per_combo,
-                          estimator = estimators,
                           dgp = dgps,
-                          n_train = n_trains)
+                          n_train = n_trains,
+                          estimator = estimators,
+                          nbin = nbins)
 
 job_id <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 
@@ -31,10 +36,11 @@ current_dynamic_args <- param_grid[job_id, ]
 
 current_seed <- job_id
 set.seed(current_seed)
-output <- replicate(nreps_per_job,
+output <- replicate(args$nreps_per_job,
                     do_one(n_train = current_dynamic_args$n_train,
                            estimator = current_dynamic_args$estimator,
-                           dgp = current_dynamic_args$dgp),
+                           dgp = current_dynamic_args$dgp,
+                           nbin = current_dynamic_args$nbin),
                     simplify = FALSE)
 sim_output <- lapply(as.list(1:length(output)),
                      function(x) tibble::add_column(output[[x]]))

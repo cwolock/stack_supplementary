@@ -1,6 +1,6 @@
 #!/usr/local/bin/Rscript
 
-sim_name <- "form_comparison"
+sim_name <- "scenario_4"
 nreps_total <- 100
 nreps_per_job <- 1
 
@@ -10,7 +10,9 @@ output_dir <- "output/"
 ## set up parameter grid
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
-estimators <- c("stackG_PI", "stackG_exp")
+estimators <- c("stackG_fine", "stackG_medium", "stackG_coarse",
+                "stackL_fine", "stackL_medium", "stackL_coarse",
+                "coxph", "LTRCforests")
 
 ## number of monte-carlo iterations per job
 nreps_per_combo <- nreps_total/nreps_per_job
