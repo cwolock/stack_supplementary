@@ -58,22 +58,6 @@ for (k in 1:nfolds){
 
   approx_times <- quantile(sort(unique(Y)), probs = seq(0, 1, by = 0.01))
 
-  # fit random forest
-  formula <- paste0("survival::Surv(entry, time, event) ~ ",
-                    paste0( names(train[,-c(1,2)]), collapse = "+"))
-  rf_fit <- LTRCforests::ltrccif(as.formula(formula),
-                                 data = data.frame(time=train$Y,
-                                                   event=train$Delta,
-                                                   entry = 0,
-                                                   train[,-c(1,2)]),
-                                 mtry = ceiling(sqrt(ncol(X))))
-  rf_pred <- t(LTRCforests::predictProb(rf_fit,
-                                        newdata = data.frame(entry = 0,
-                                                             time = test$Y,
-                                                             event = test$Delta,
-                                                             test[,-c(1,2)]),
-                                        time.eval = approx_times)$survival.probs)
-
   # fit global stacking
   stackG_out <- survML::stackG(time = train$Y,
                                event = train$Delta,
@@ -116,6 +100,22 @@ for (k in 1:nfolds){
                                        nrow=nrow(cox_pred),
                                        ncol=length(approx_times) - ncol(cox_pred)))
   }
+
+  # fit random forest
+  formula <- paste0("survival::Surv(entry, time, event) ~ ",
+                    paste0( names(train[,-c(1,2)]), collapse = "+"))
+  rf_fit <- LTRCforests::ltrccif(as.formula(formula),
+                                 data = data.frame(time=train$Y,
+                                                   event=train$Delta,
+                                                   entry = 0,
+                                                   train[,-c(1,2)]),
+                                 mtry = ceiling(sqrt(ncol(X))))
+  rf_pred <- t(LTRCforests::predictProb(rf_fit,
+                                        newdata = data.frame(entry = 0,
+                                                             time = test$Y,
+                                                             event = test$Delta,
+                                                             test[,-c(1,2)]),
+                                        time.eval = approx_times)$survival.probs)
 
   # fit Kaplan Meier for censoring weights
   cens_km <- survival::survfit(
