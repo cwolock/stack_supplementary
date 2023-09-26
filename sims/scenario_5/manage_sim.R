@@ -36,7 +36,7 @@ current_dynamic_args <- param_grid[job_id, ]
 
 current_seed <- job_id
 set.seed(current_seed)
-output <- replicate(args$nreps_per_job,
+output <- replicate(nreps_per_job,
                     do_one(n_train = current_dynamic_args$n_train,
                            estimator = current_dynamic_args$estimator,
                            dgp = current_dynamic_args$dgp,
