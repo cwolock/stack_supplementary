@@ -1,4 +1,8 @@
 # set up
+.libPaths(c(
+	      "/home/cwolock/R_lib",
+	        .libPaths()
+	      ))
 library(survML)
 library(survival)
 library(tidyverse)
@@ -7,7 +11,6 @@ library(squash)
 set.seed(123)
 
 # load data (replace with appropriate path based on your environment)
-blind <- read.csv("C:/Users/cwolo/Dropbox/UW/DISSERTATION/conditional_surv/step_analysis/master_mitt_males_17OCT2007.csv")
 blind <- read.csv("step_data.csv")
 
 # transform Ad5
@@ -135,7 +138,7 @@ end %>% ggplot(aes(x = `Baseline log(Ad5) titer`, y = `Excess infection risk in 
   theme(text = element_text(size = 16),
         strip.background = element_blank(),) +
   ylab("Risk difference (vaccine - placebo)")
-ggsave("step_analysis.png", # save wherever you like
+ggsave("step_diffs.png", # save wherever you like
        device='png', width=12,
        height=4, units='in', dpi=300)
 

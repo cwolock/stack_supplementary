@@ -156,7 +156,7 @@ do_one <- function(n_train, n_test=1000, estimator, dgp){
                                               obsWeights = NULL,
                                               control = list(initWeightAlg = "survSL.rfsrc"))
     est_df <- fit$event.SL.predict
-  } else if (estimataor == "gam"){
+  } else if (estimator == "gam"){
     fit <- mgcv::gam(time ~ s(X1) + s(X2) + X3 + X4 + s(X5) + s(X6)
                      + s(X7) + s(X8) + s(X9) + s(X10),
                      family = mgcv::cox.ph(),

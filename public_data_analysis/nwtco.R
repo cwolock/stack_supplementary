@@ -1,3 +1,7 @@
+.libPaths(c(
+	      "/home/cwolock/R_lib",
+	        .libPaths()
+	      ))
 # setup
 library(survival)
 library(tidyverse)

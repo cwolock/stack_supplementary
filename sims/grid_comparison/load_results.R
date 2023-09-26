@@ -1,5 +1,5 @@
 #!/usr/local/bin/Rscript
-sim_name <- "scenario_2"
+sim_name <- "grid_comparison"
 nreps_total <- 100
 nreps_per_job <- 1
 
@@ -24,6 +24,8 @@ param_grid <- expand.grid(mc_id = 1:nreps_per_combo,
 output_nms <- paste0(sim_name, "_", 1:dim(param_grid)[1], ".rds")
 avail_nms <- list.files(output_dir, pattern = paste0(sim_name, "_*"))
 names_to_try <- output_nms[which(output_nms %in% avail_nms)]
+# print names of missing jobs, if any
+print(output_nms[which(!(output_nms %in% avail_nms))])
 ## list of output
 output_lst <- lapply(paste0(output_dir, names_to_try), readRDS)
 ## make it a matrix
