@@ -9,7 +9,7 @@ suppressMessages(library(survival))
 suppressMessages(library(dplyr))
 suppressMessages(library(LTRCforests))
 
-sim_name <- "grid_comparison"
+sim_name <- "approx_grid_comparison"
 nreps_total <- 100
 nreps_per_job <- 1
 
