@@ -45,18 +45,23 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp){
 
   start_time <- Sys.time()
   if (estimator == "stackG_fine_W"){ # global stacking, all times grid
-    F_Y_1_grid <- c(0,
-                sort(unique(quantile(train$Y[train$Delta == 1],
-                                     probs = seq(0, 1,length.out = sum(train$Delta))))))
-    F_Y_0_grid <- c(0,
-                sort(unique(quantile(train$Y[train$Delta == 0],
-                                     probs = seq(0, 1,length.out = sum(1 - train$Delta))))))
-    G_W_1_grid <- c(0,
-                    sort(unique(quantile(train$W[train$Delta == 1],
-                                         probs = seq(0, 1,length.out = sum(train$Delta))))))
-    G_W_0_grid <- c(0,
-                    sort(unique(quantile(train$W[train$Delta == 0],
-                                         probs = seq(0, 1,length.out = sum(1 - train$Delta))))))
+    F_Y_1_grid <- sort(unique(c(0,train$Y[train$Delta == 1])))
+    F_Y_0_grid <- sort(unique(c(0,train$Y[train$Delta == 0])))
+    G_W_1_grid <- sort(unique(c(0,train$W[train$Delta == 1])))
+    G_W_0_grid <- sort(unique(c(0,train$W[train$Delta == 0])))
+    #
+    # F_Y_1_grid <- c(0,
+    #                 sort(unique(quantile(train$Y[train$Delta == 1],
+    #                                      probs = seq(0, 1,length.out = sum(train$Delta))))))
+    # F_Y_0_grid <- c(0,
+    #                 sort(unique(quantile(train$Y[train$Delta == 0],
+    #                                      probs = seq(0, 1,length.out = sum(1 - train$Delta))))))
+    # G_W_1_grid <- c(0,
+    #                 sort(unique(quantile(train$W[train$Delta == 1],
+    #                                      probs = seq(0, 1,length.out = sum(train$Delta))))))
+    # G_W_0_grid <- c(0,
+    #                 sort(unique(quantile(train$W[train$Delta == 0],
+    #                                      probs = seq(0, 1,length.out = sum(1 - train$Delta))))))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
                           entry = train$W,
@@ -132,12 +137,14 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp){
                                             V = 5))
     est_df <- out$S_T_preds
   } else if (estimator == "stackG_fine_Y"){ # global stacking, all times grid
-    F_Y_1_grid <- c(0,
-                    sort(unique(quantile(train$Y[train$Delta == 1],
-                                         probs = seq(0, 1,length.out = sum(train$Delta))))))
-    F_Y_0_grid <- c(0,
-                    sort(unique(quantile(train$Y[train$Delta == 0],
-                                         probs = seq(0, 1,length.out = sum(1 - train$Delta))))))
+    F_Y_1_grid <- sort(unique(c(0,train$Y[train$Delta == 1])))
+    F_Y_0_grid <- sort(unique(c(0,train$Y[train$Delta == 0])))
+    # F_Y_1_grid <- c(0,
+    #                 sort(unique(quantile(train$Y[train$Delta == 1],
+    #                                      probs = seq(0, 1,length.out = sum(train$Delta))))))
+    # F_Y_0_grid <- c(0,
+    #                 sort(unique(quantile(train$Y[train$Delta == 0],
+    #                                      probs = seq(0, 1,length.out = sum(1 - train$Delta))))))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
                           entry = train$W,
@@ -195,6 +202,98 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp){
                                                F_Y_0_grid = F_Y_0_grid,
                                                G_W_1_grid = F_Y_1_grid,
                                                G_W_0_grid = F_Y_0_grid),
+                          time_basis = "continuous",
+                          surv_form = "exp",
+                          SL_control = list(SL.library = SL.library,
+                                            V = 5))
+    est_df <- out$S_T_preds
+  } else if (estimator == "stackG_fine_WY"){ # global stacking, all times grid
+    # F_Y_1_grid <- c(0,
+    #                 sort(unique(quantile(train$Y[train$Delta == 1],
+    #                                      probs = seq(0, 1,length.out = sum(train$Delta))))))
+    # F_Y_0_grid <- c(0,
+    #                 sort(unique(quantile(train$Y[train$Delta == 0],
+    #                                      probs = seq(0, 1,length.out = sum(1 - train$Delta))))))
+    F_Y_1_grid <- sort(unique(c(0,train$Y[train$Delta == 1])))
+    F_Y_0_grid <- sort(unique(c(0,train$Y[train$Delta == 0])))
+    G_W_1_grid <- sort(unique(c(0,train$W[train$Delta == 1],train$Y[train$Delta == 1])))
+    G_W_0_grid <- sort(unique(c(0,train$W[train$Delta == 0],train$Y[train$Delta == 0])))
+    #
+    #   c(0,
+    #                 sort(unique(quantile(c(train$W[train$Delta == 1],train$Y[train$Delta == 1]),
+    #                                      probs = seq(0, 1,length.out = sum(train$Delta))))))
+    # G_W_0_grid <- c(0,
+    #                 sort(unique(quantile(train$W[train$Delta == 0],
+    #                                      probs = seq(0, 1,length.out = sum(1 - train$Delta))))))
+    out <- survML::stackG(time = train$Y,
+                          event = train$Delta,
+                          entry = train$W,
+                          X = train[,1:dimension],
+                          newX = test[,1:dimension],
+                          newtimes = benchmark_times,
+                          time_grid_approx = approx_times,
+                          time_grid_fit = list(F_Y_1_grid = F_Y_1_grid,
+                                               F_Y_0_grid = F_Y_0_grid,
+                                               G_W_1_grid = G_W_1_grid,
+                                               G_W_0_grid = G_W_0_grid),
+                          time_basis = "continuous",
+                          surv_form = "exp",
+                          SL_control = list(SL.library = SL.library,
+                                            V = 5))
+    est_df <- out$S_T_preds
+  } else if (estimator == "stackG_medium_WY"){
+    F_Y_1_grid <- c(0,
+                    sort(unique(quantile(train$Y[train$Delta == 1],
+                                         probs = seq(0, 1,length.out = 40)))))
+    F_Y_0_grid <- c(0,
+                    sort(unique(quantile(train$Y[train$Delta == 0],
+                                         probs = seq(0, 1,length.out = 40)))))
+    G_W_1_grid <- c(0,
+                    sort(unique(quantile(c(train$W[train$Delta == 1],train$Y[train$Delta == 1]),
+                                         probs = seq(0, 1,length.out = 40)))))
+    G_W_0_grid <- c(0,
+                    sort(unique(quantile(c(train$W[train$Delta == 0],train$Y[train$Delta == 0]),
+                                         probs = seq(0, 1,length.out = 40)))))
+    out <- survML::stackG(time = train$Y,
+                          event = train$Delta,
+                          entry = train$W,
+                          X = train[,1:dimension],
+                          newX = test[,1:dimension],
+                          newtimes = benchmark_times,
+                          time_grid_approx = approx_times,
+                          time_grid_fit = list(F_Y_1_grid = F_Y_1_grid,
+                                               F_Y_0_grid = F_Y_0_grid,
+                                               G_W_1_grid = G_W_1_grid,
+                                               G_W_0_grid = G_W_0_grid),
+                          time_basis = "continuous",
+                          surv_form = "exp",
+                          SL_control = list(SL.library = SL.library,
+                                            V = 5))
+    est_df <- out$S_T_preds
+  } else if (estimator == "stackG_coarse_WY"){
+    F_Y_1_grid <- c(0,
+                    sort(unique(quantile(train$Y[train$Delta == 1],
+                                         probs = seq(0, 1,length.out = 10)))))
+    F_Y_0_grid <- c(0,
+                    sort(unique(quantile(train$Y[train$Delta == 0],
+                                         probs = seq(0, 1,length.out = 10)))))
+    G_W_1_grid <- c(0,
+                    sort(unique(quantile(c(train$W[train$Delta == 1],train$Y[train$Delta == 1]),
+                                         probs = seq(0, 1,length.out = 10)))))
+    G_W_0_grid <- c(0,
+                    sort(unique(quantile(c(train$W[train$Delta == 0],train$Y[train$Delta == 0]),
+                                         probs = seq(0, 1,length.out = 10)))))
+    out <- survML::stackG(time = train$Y,
+                          event = train$Delta,
+                          entry = train$W,
+                          X = train[,1:dimension],
+                          newX = test[,1:dimension],
+                          newtimes = benchmark_times,
+                          time_grid_approx = approx_times,
+                          time_grid_fit = list(F_Y_1_grid = F_Y_1_grid,
+                                               F_Y_0_grid = F_Y_0_grid,
+                                               G_W_1_grid = G_W_1_grid,
+                                               G_W_0_grid = G_W_0_grid),
                           time_basis = "continuous",
                           surv_form = "exp",
                           SL_control = list(SL.library = SL.library,
