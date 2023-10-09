@@ -22,7 +22,7 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp){
   theo_quant <- round(quantile(test$Y[test$Delta == 1], probs = c(0.5, 0.75, 0.9)),
                       digits = 0)
   # benchmarks
-  approx_times <- sort(unique(train$Y[train$Delta == 1]))
+  approx_times <- sort(unique(train$Y))#[train$Delta == 1]))
   benchmark_times <- seq(0.1, 100, by = 0.1)
 
   # calculate true survival function values
