@@ -21,7 +21,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
                                probs = c(0.5, 0.75, 0.9)),
                       digits = 0)
   # benchmarks
-  approx_times <- sort(unique(train$Y[train$Delta == 1]))
+  # approx_times <- sort(unique(train$Y[train$Delta == 1]))
   benchmark_times <- seq(0.1, 100, by = 0.1)
 
   # calculate true survival function values
@@ -43,6 +43,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
                   "SL.gam", "SL.ranger", xgb_grid$names)
   start_time <- Sys.time()
   if (rate == "1/4"){
+    approx_times <- quantile(train$Y, probs = seq(0, 1, length.out = n_train^(1/4)))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
                           X = train[,1:dimension],
@@ -56,6 +57,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
                                             V = 5))
     est_df <- out$S_T_preds
   } else if (rate == "1/3"){ # global stacking, all times grid
+    approx_times <- quantile(train$Y, probs = seq(0, 1, length.out = n_train^(1/3)))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
                           X = train[,1:dimension],
@@ -69,6 +71,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
                                             V = 5))
     est_df <- out$S_T_preds
   } else if (estimator == "1/2"){ # global stacking 0.025 grid
+    approx_times <- quantile(train$Y, probs = seq(0, 1, length.out = n_train^(1/2)))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
                           X = train[,1:dimension],
@@ -82,6 +85,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
                                             V = 5))
     est_df <- out$S_T_preds
   } else if (estimator == "2/3"){ # global stacking, 0.1 grid
+    approx_times <- quantile(train$Y, probs = seq(0, 1, length.out = n_train^(2/3)))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
                           X = train[,1:dimension],
@@ -95,6 +99,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
                                             V = 5))
     est_df <- out$S_T_preds
   } else if (estimator == "3/4"){ # global stacking, 0.1 grid
+    approx_times <- quantile(train$Y, probs = seq(0, 1, length.out = n_train^(3/4)))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
                           X = train[,1:dimension],
@@ -108,6 +113,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
                                             V = 5))
     est_df <- out$S_T_preds
   } else if (estimator == "1"){ # global stacking, 0.1 grid
+    approx_times <- quantile(train$Y, probs = seq(0, 1, length.out = n_train))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
                           X = train[,1:dimension],
