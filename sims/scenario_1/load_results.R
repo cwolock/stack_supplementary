@@ -1,7 +1,7 @@
 #!/usr/local/bin/Rscript
 
 sim_name <- "scenario_1"
-nreps_total <- 100
+nreps_total <- 200
 nreps_per_job <- 1
 
 ## set up directories for output, plots

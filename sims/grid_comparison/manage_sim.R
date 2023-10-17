@@ -18,8 +18,9 @@ source("/home/cwolock/stack_supplementary/sims/generate_data.R")
 
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
-estimators <- c("stackG_fine_W", "stackG_medium_W", "stackG_coarse_W",
-                "stackG_fine_Y", "stackG_medium_Y", "stackG_coarse_Y")
+estimators <- c("stackG_medium_W", "stackG_coarse_W",
+                "stackG_medium_Y", "stackG_coarse_Y",
+                "stackG_medium_WY", "stackG_coarse_WY")
 
 njobs_per_combo <- nreps_total/nreps_per_job
 

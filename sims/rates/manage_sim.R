@@ -36,7 +36,7 @@ current_seed <- job_id
 set.seed(current_seed)
 output <- replicate(nreps_per_job,
                     do_one(n_train = current_dynamic_args$n_train,
-                           rate = current_dynamic_args$rates,
+                           rate = current_dynamic_args$rate,
                            dgp = current_dynamic_args$dgp),
                     simplify = FALSE)
 sim_output <- lapply(as.list(1:length(output)),

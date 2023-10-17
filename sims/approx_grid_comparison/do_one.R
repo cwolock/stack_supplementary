@@ -42,7 +42,7 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp){
 
   start_time <- Sys.time()
   if (estimator == "stackG_all"){ # global stacking, all times grid
-    approx_times <- sort(unique(train$Y[train$Delta == 1]))
+    approx_times <- sort(unique(train$Y))#[train$Delta == 1]))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
                           X = train[,1:dimension],
@@ -56,7 +56,7 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp){
                                             V = 5))
     est_df <- out$S_T_preds
   } else if (estimator == "stackG_250"){
-    approx_times <- quantile(train$Y[train$Delta == 1], probs = seq(0, 1, length.out = 250))
+    approx_times <- quantile(train$Y, probs = seq(0, 1, length.out = 250))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
                           X = train[,1:dimension],
@@ -70,7 +70,7 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp){
                                             V = 5))
     est_df <- out$S_T_preds
   } else if (estimator == "stackG_100"){
-    approx_times <- quantile(train$Y[train$Delta == 1], probs = seq(0, 1, length.out = 100))
+    approx_times <- quantile(train$Y, probs = seq(0, 1, length.out = 100))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
                           X = train[,1:dimension],
@@ -84,7 +84,7 @@ do_one <- function(n_train, n_test = 1000, estimator, dgp){
                                             V = 5))
     est_df <- out$S_T_preds
   } else if (estimator == "stackG_50"){ # global stacking, all times grid
-    approx_times <- quantile(train$Y[train$Delta == 1], probs = seq(0, 1, length.out = 50))
+    approx_times <- quantile(train$Y, probs = seq(0, 1, length.out = 50))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
                           X = train[,1:dimension],

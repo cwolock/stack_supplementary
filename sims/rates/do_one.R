@@ -70,7 +70,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
                           SL_control = list(SL.library = SL.library,
                                             V = 5))
     est_df <- out$S_T_preds
-  } else if (estimator == "1/2"){ # global stacking 0.025 grid
+  } else if (rate == "1/2"){ # global stacking 0.025 grid
     approx_times <- quantile(train$Y, probs = seq(0, 1, length.out = n_train^(1/2)))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
@@ -84,7 +84,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
                           SL_control = list(SL.library = SL.library,
                                             V = 5))
     est_df <- out$S_T_preds
-  } else if (estimator == "2/3"){ # global stacking, 0.1 grid
+  } else if (rate == "2/3"){ # global stacking, 0.1 grid
     approx_times <- quantile(train$Y, probs = seq(0, 1, length.out = n_train^(2/3)))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
@@ -98,7 +98,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
                           SL_control = list(SL.library = SL.library,
                                             V = 5))
     est_df <- out$S_T_preds
-  } else if (estimator == "3/4"){ # global stacking, 0.1 grid
+  } else if (rate == "3/4"){ # global stacking, 0.1 grid
     approx_times <- quantile(train$Y, probs = seq(0, 1, length.out = n_train^(3/4)))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
@@ -112,7 +112,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
                           SL_control = list(SL.library = SL.library,
                                             V = 5))
     est_df <- out$S_T_preds
-  } else if (estimator == "1"){ # global stacking, 0.1 grid
+  } else if (rate == "1"){ # global stacking, 0.1 grid
     approx_times <- quantile(train$Y, probs = seq(0, 1, length.out = n_train))
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,

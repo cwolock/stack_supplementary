@@ -10,16 +10,14 @@ output_dir <- "output/"
 ## set up parameter grid
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
-estimators <- c("stackG_fine", "stackG_medium", "stackG_coarse",
-                "stackL_fine", "stackL_medium", "stackL_coarse",
-                "coxph", "survSL", "gam", "LTRCforests")
+rates <- c("1/4", "1/3", "1/2", "2/3", "3/4", "1")
 
 ## number of monte-carlo iterations per job
 nreps_per_combo <- nreps_total/nreps_per_job
 ## set up grid of parameters
 param_grid <- expand.grid(mc_id = 1:nreps_per_combo,
                           n_train = n_trains,
-                          estimator = estimators,
+			  rate = rates,
                           dgp = dgps)
 
 ## names of files to read in
