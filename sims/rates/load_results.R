@@ -1,6 +1,6 @@
 #!/usr/local/bin/Rscript
 
-sim_name <- "scenario_1"
+sim_name <- "rates"
 nreps_total <- 100
 nreps_per_job <- 1
 
