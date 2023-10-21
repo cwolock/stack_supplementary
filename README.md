@@ -8,19 +8,19 @@ The appendix contains all technical details, as well as simulation results not i
 
 ## Code
 
-The code directory contains all code needed to replicate the simulations, analysis of publicly available data, and analysis of STEP data (although the STEP data themselves are not publicly available). 
+The code directory contains all code needed to replicate the simulations, analysis of publicly available data, and analysis of STEP data. 
 
 The code depends on the following `R` packages: 
 
-* `cowplot`: Available on CRAN
-* `ggpubr`: Available on CRAN
-* `LTRCforests`: Removed from CRAN as of March 2023. Available on Github at https://github.com/weichiyao/TimeVaryingData_LTRCforests/pkg/LTRCforests
-* `squash`: Available on CRAN
-* `SuperLearner`: Available on CRAN
-* `survival`: Available on CRAN
-* `survML`: Available on CRAN
-* `survSuperLearner`: Available on Github at https://github.com/tedwestling/survSuperLearner
-* `tidyverse`: Available on CRAN
+* `cowplot`: Available on CRAN.
+* `ggpubr`: Available on CRAN.
+* `LTRCforests`: Removed from CRAN as of March 2023. Available on Github at https://github.com/weichiyao/TimeVaryingData_LTRCforests/pkg/LTRCforests.
+* `squash`: Available on CRAN.
+* `SuperLearner`: Available on CRAN.
+* `survival`: Available on CRAN.
+* `survML`: Available on CRAN.
+* `survSuperLearner`: Available on Github at https://github.com/tedwestling/survSuperLearner.
+* `tidyverse`: Available on CRAN.
 
 Note that `survSuperLearner` and `LTRCforests` are only used a comparator methods in the simulation studies. If you have difficulty installing them, you can simply leave those methods out. 
 
@@ -40,7 +40,7 @@ The `simulations` directory contains subdirectories corresponding to each set of
 
 5. Run `Rscript load_results.R` to compile the results in a single file called `{subdirectory name}.rds`. 
 
-6. Run `Rscript create_figures.R` to create the figures corresponding to this set of experiments. 
+When all simulations have finished and results have been compiled, run `Rscript figures.R` to create the figures corresponding to this set of experiments. 
 
 ### Analysis of publicly available data
 

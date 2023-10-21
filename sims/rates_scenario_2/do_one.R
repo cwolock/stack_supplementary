@@ -3,12 +3,16 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
   dimension <- 10
 
   # training data
-  data_gen <- generate_data(n = n_train,
-                            truncation = "none",
+  # training data
+  data_gen <- generate_data(n = n_train*6,
+                            truncation = "covariate",
                             direction = "prospective",
                             dgp = dgp)
 
   train <- data_gen$data
+  indices <- sample(1:nrow(train), n_train)
+  train <- train[indices,] # b/c of truncation,
+  # generate more samples than needed, then randomly select n_train
   true_S_T <- data_gen$true_S_T
 
   # test data
@@ -21,7 +25,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
                                probs = c(0.5, 0.75, 0.9)),
                       digits = 0)
   # benchmarks
-  approx_times <- sort(unique(train$Y[train$Delta == 1]))
+  approx_times <- sort(unique(train$Y[train$Delta == 1])) # just a placeholder
   benchmark_times <- seq(0.1, 100, by = 0.1)
 
   # calculate true survival function values
@@ -46,6 +50,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
   if (rate == "1/4"){
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
+                          entry = train$W,
                           X = train[,1:dimension],
                           newX = test[,1:dimension],
                           newtimes = benchmark_times,
@@ -58,6 +63,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
   } else if (rate == "1/3"){ # global stacking, all times grid
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
+                          entry = train$W,
                           X = train[,1:dimension],
                           newX = test[,1:dimension],
                           newtimes = benchmark_times,
@@ -70,6 +76,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
   } else if (rate == "1/2"){ # global stacking 0.025 grid
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
+                          entry = train$W,
                           X = train[,1:dimension],
                           newX = test[,1:dimension],
                           newtimes = benchmark_times,
@@ -82,6 +89,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
   } else if (rate == "2/3"){ # global stacking, 0.1 grid
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
+                          entry = train$W,
                           X = train[,1:dimension],
                           newX = test[,1:dimension],
                           newtimes = benchmark_times,
@@ -94,6 +102,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
   } else if (rate == "3/4"){ # global stacking, 0.1 grid
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
+                          entry = train$W,
                           X = train[,1:dimension],
                           newX = test[,1:dimension],
                           newtimes = benchmark_times,
@@ -106,6 +115,7 @@ do_one <- function(n_train, n_test=1000, rate, dgp){
   } else if (rate == "1"){ # global stacking, 0.1 grid
     out <- survML::stackG(time = train$Y,
                           event = train$Delta,
+                          entry = train$W,
                           X = train[,1:dimension],
                           newX = test[,1:dimension],
                           newtimes = benchmark_times,
