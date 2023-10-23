@@ -10,7 +10,7 @@ suppressMessages(library(survival))
 suppressMessages(library(dplyr))
 suppressMessages(library(LTRCforests))
 
-sim_name <- "rates"
+sim_name <- "rates_scenario_1"
 nreps_total <- 100
 nreps_per_job <- 1
 
@@ -19,14 +19,16 @@ source("/home/cwolock/stack_supplementary/sims/generate_data.R")
 
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
-rates <- c("1/4", "1/3", "1/2", "2/3", "3/4", "1")
+C_rates <- c("1/4", "1/3", "1/2", "2/3", "3/4", "1")
+B_rates <- c("1/4", "1/3", "1/2", "2/3", "3/4", "1")
 
 njobs_per_combo <- nreps_total/nreps_per_job
 
 param_grid <- expand.grid(mc_id = 1:njobs_per_combo,
                           dgp = dgps,
                           n_train = n_trains,
-                          rate = rates)
+                          C_rate = C_rates,
+                          B_rate = B_rates)
 
 job_id <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 
@@ -36,7 +38,8 @@ current_seed <- job_id
 set.seed(current_seed)
 output <- replicate(nreps_per_job,
                     do_one(n_train = current_dynamic_args$n_train,
-                           rate = current_dynamic_args$rate,
+                           C_rate = current_dynamic_args$C_rate,
+                           B_rate = current_dynamic_args$B_rate,
                            dgp = current_dynamic_args$dgp),
                     simplify = FALSE)
 sim_output <- lapply(as.list(1:length(output)),

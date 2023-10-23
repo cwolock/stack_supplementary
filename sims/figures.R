@@ -17,34 +17,41 @@ setwd(wd)
 ### Partition size in terms of n
 ################################
 dat <- readRDS("rates.rds")
+# dat <- dat %>% filter(rate != "1/4" & approx_rate != "0.25")
 dat <- dat %>% mutate(C_partition_size = factor(rate,
                                                 levels = c("1/4", "1/3", "1/2", "2/3", "3/4", "1"),
-                                                labels = c(expression(n^{1/4}),
-                                                           expression(n^{1/3}),
-                                                           expression(n^{1/2}),
-                                                           expression(n^{2/3}),
-                                                           expression(n^{3/4}),
-                                                           expression(n))),
+                                                labels = c("$n^{1/4}$", "$n^{1/3}$", "$n^{1/2}$",
+                                                           "$n^{2/3}$", "$n^{3/4}$", "$n$")),
+                                                  # c(expression(n^{1/4}),
+                                                           # expression(n^{1/3}),
+                                                           # # expression(n^{1/2}),
+                                                           # expression(n^{2/3}),
+                                                           # expression(n^{3/4}),
+                                                           # expression(n))),
                       B_partition_size = factor(approx_rate,
                                                 levels = c("0.25", "0.333", "0.5", "0.667", "0.75", "1"),
-                                                labels = c(expression(n^{1/4}),
-                                                           expression(n^{1/3}),
-                                                           expression(n^{1/2}),
-                                                           expression(n^{2/3}),
-                                                           expression(n^{3/4}),
-                                                           expression(n))),
+                                                labels = c("$n^{1/4}$", "$n^{1/3}$", "$n^{1/2}$",
+                                                           "$n^{2/3}$", "$n^{3/4}$", "$n$")),
+                                                # labels = c(expression(n^{1/4}),
+                                                #            expression(n^{1/3}),
+                                                #            expression(n^{1/2}),
+                                                #            expression(n^{2/3}),
+                                                #            expression(n^{3/4}),
+                                                #            expression(n))),
                       dgp = recode_factor(dgp,
                                           rightskew = "Right skew",
                                           leftskew = "Left skew")) %>%
   mutate(B_partition_size = fct_rev(B_partition_size))
 
 summ <- dat %>% group_by(C_partition_size, B_partition_size, dgp, n_train) %>%
-  summarize(MISE = log(mean(MSE_uni))) %>%
+  summarize(MISE = mean(log(MSE_uni)),
+            run = mean(runtime)) %>%
   mutate(n_train = factor(n_train,
                           levels = c(250, 500, 750, 1000),
                           labels = c("n = 250", "n = 500", "n = 750", "n = 1000"))) %>%
-  group_by(dgp) %>%
-  mutate(MISE = (MISE - min(MISE))/(max(MISE) - min(MISE)))
+  arrange(n_train, desc(B_partition_size))
+  # group_by(dgp)
+  # mutate(MISE = (MISE - min(MISE))/(max(MISE) - min(MISE)))
 
 # pal <- greyscale(length(unique(dat$C_partition_size)), start = 1, end = 0.4)
 # dat %>% ggplot(aes(x = factor(n_train), y = log(MSE_uni))) +
@@ -55,23 +62,49 @@ summ <- dat %>% group_by(C_partition_size, B_partition_size, dgp, n_train) %>%
 #   facet_grid(B_partition_size ~ dgp) +
 #   scale_fill_manual(values = pal) +
 #   theme_bw()
+#
+# blah <- summ %>% filter(dgp == "Left skew") %>%
+#   arrange(n_train, B_partition_size)
 
-full_plot <- summ %>% ggplot(aes(x = C_partition_size, y = B_partition_size, fill = MISE)) +
-  geom_tile() +
-  facet_grid(factor(n_train) ~ dgp) +
-  theme_bw() +
-  scale_fill_distiller(type = "seq",
-                       direction = 1,
-                       palette = "Greys") +
-  ylab("Approximation grid size") +
-  xlab("Regression grid size") +
-  scale_x_discrete(labels = ~parse(text = .x)) +
-  scale_y_discrete(labels = ~parse(text = .x)) +
-  theme(text = element_text(size = 12),
-        strip.background = element_blank(),
-        strip.placement = "outside",
-        legend.position = "none",
-        axis.text.x=element_text(size=8, hjust=0.5,vjust=0.2))
+
+t1 <- summ %>%
+  ungroup() %>%
+  filter(dgp == "Left skew") %>%
+  select(-c(dgp,run)) %>%
+  pivot_wider(names_from = B_partition_size, values_from = MISE) %>%
+  arrange(n_train) %>%
+  select(c("n_train", "C_partition_size", "$n^{1/4}$", "$n^{1/3}$",
+           "$n^{1/2}$", "$n^{2/3}$", "$n^{3/4}$", "$n$"))
+t1 <- xtable(t1, digits = 2)
+print(t1, include.rownames=FALSE, sanitize.text.function=function(x){x})
+
+t2 <- summ %>%
+  ungroup() %>%
+  filter(dgp == "Right skew") %>%
+  select(-c(dgp,run)) %>%
+  pivot_wider(names_from = B_partition_size, values_from = MISE) %>%
+  arrange(n_train) %>%
+  select(c("n_train", "C_partition_size", "$n^{1/4}$", "$n^{1/3}$",
+           "$n^{1/2}$", "$n^{2/3}$", "$n^{3/4}$", "$n$"))
+t2 <- xtable(t2, digits = 2)
+print(t2, include.rownames=FALSE, sanitize.text.function=function(x){x})
+
+# full_plot <- summ %>% ggplot(aes(x = C_partition_size, y = B_partition_size, fill = MISE)) +
+#   geom_tile() +
+#   facet_grid(factor(n_train) ~ dgp) +
+#   theme_bw() +
+#   scale_fill_distiller(type = "seq",
+#                        direction = 1,
+#                        palette = "Greys") +
+#   ylab("Approximation grid size") +
+#   xlab("Regression grid size") +
+#   scale_x_discrete(labels = ~parse(text = .x)) +
+#   scale_y_discrete(labels = ~parse(text = .x)) +
+#   theme(text = element_text(size = 12),
+#         strip.background = element_blank(),
+#         strip.placement = "outside",
+#         legend.position = "none",
+#         axis.text.x=element_text(size=8, hjust=0.5,vjust=0.2))
 
 
 
