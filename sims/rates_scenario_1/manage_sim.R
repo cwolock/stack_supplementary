@@ -14,7 +14,7 @@ sim_name <- "rates_scenario_1"
 nreps_total <- 100
 nreps_per_job <- 1
 
-source("/home/cwolock/stack_supplementary/sims/rates/do_one.R")
+source("/home/cwolock/stack_supplementary/sims/rates_scenario_1/do_one.R")
 source("/home/cwolock/stack_supplementary/sims/generate_data.R")
 
 n_trains <- c(250, 500, 750, 1000)
