@@ -1,5 +1,5 @@
 #!/usr/local/bin/Rscript
-sim_name <- "grid_comparison"
+sim_name <- "W_grid_comparison"
 nreps_total <- 100
 nreps_per_job <- 1
 

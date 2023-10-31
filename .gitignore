@@ -1,2 +1,5 @@
 *.rds
 *.out
+*.png
+*.csv
+*.swp

@@ -9,18 +9,17 @@ suppressMessages(library(survival))
 suppressMessages(library(dplyr))
 suppressMessages(library(LTRCforests))
 
-sim_name <- "grid_comparison"
+sim_name <- "W_grid_comparison"
 nreps_total <- 100
 nreps_per_job <- 1
 
-source("/home/cwolock/stack_supplementary/sims/grid_comparison/do_one.R")
+source("/home/cwolock/stack_supplementary/sims/W_grid_comparison/do_one.R")
 source("/home/cwolock/stack_supplementary/sims/generate_data.R")
 
 n_trains <- c(250, 500, 750, 1000)
 dgps <- c("leftskew", "rightskew")
-estimators <- c("stackG_medium_W", "stackG_coarse_W",
-                "stackG_medium_Y", "stackG_coarse_Y",
-                "stackG_medium_WY", "stackG_coarse_WY")
+estimators <- c("stackG_fine_W", "stackG_medium_W", "stackG_coarse_W",
+                "stackG_fine_Y", "stackG_medium_Y", "stackG_coarse_Y")
 
 njobs_per_combo <- nreps_total/nreps_per_job
 

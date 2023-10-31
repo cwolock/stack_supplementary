@@ -10,7 +10,7 @@ suppressMessages(library(dplyr))
 suppressMessages(library(LTRCforests))
 
 sim_name <- "scenario_2"
-nreps_total <- 200
+nreps_total <- 100
 nreps_per_job <- 1
 
 source("/home/cwolock/stack_supplementary/sims/scenario_2/do_one.R")
