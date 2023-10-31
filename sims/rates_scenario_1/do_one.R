@@ -43,9 +43,9 @@ do_one <- function(n_train, n_test=1000, C_rate, B_rate, dgp){
                   "SL.gam", "SL.ranger", xgb_grid$names)
   start_time <- Sys.time()
   # approx_rates <- c("0.25", "0.333", "0.5", "0.667", "0.75", "1")
-  B_rate_numeric <- as.numeric(eval(str2lang(B_rate)))
+  B_rate_numeric <- as.numeric(eval(str2lang(as.character(B_rate))))
   approx_times <- quantile(train$Y, probs = seq(0, 1, length.out = n_train^B_rate_numeric))
-  C_rate_numeric <- as.numeric(eval(str2lang(C_rate)))
+  C_rate_numeric <- as.numeric(eval(str2lang(as.character(C_rate))))
   out <- survML::stackG(time = train$Y,
                         event = train$Delta,
                         X = train[,1:dimension],
