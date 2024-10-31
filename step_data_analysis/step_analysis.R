@@ -138,9 +138,9 @@ end %>% ggplot(aes(x = `Baseline log(Ad5) titer`, y = `Excess infection risk in 
   theme(text = element_text(size = 16),
         strip.background = element_blank(),) +
   ylab("Risk difference (vaccine - placebo)")
-ggsave("step_diffs.png", # save wherever you like
-       device='png', width=12,
-       height=4, units='in', dpi=300)
+ggsave("step_diffs.pdf", # save wherever you like
+       device='pdf', width=12,
+       height=3, units='in', dpi=300)
 
 
 # set up estimated representative survival curve
@@ -181,6 +181,6 @@ example_surv %>% ggplot(aes(x = time, y = surv)) +
         strip.background = element_blank(),) +
   ylab("1 - estimated probability of HIV-1 diagnosis") +
   xlab("Time (days)")
-ggsave("step_curves.png",
-       device='png', width=12,
-       height=6, units='in', dpi=300)
+ggsave("step_curves.pdf",
+       device='pdf', width=12,
+       height=4, units='in', dpi=300)

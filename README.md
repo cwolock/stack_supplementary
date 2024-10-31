@@ -1,6 +1,6 @@
 # Supplementary materials for global survival stacking paper
 
-This repository contains code to reproduce the analyses in ["A framework for leveraging machine learning tools to estimate personalized survival curves"](https://arxiv.org/abs/2211.03031) by Wolock, Gilbert, Simon, and Carone (2022+). All analyses were implemented using the `R` package `survML`, which is available on CRAN (stable release) and [here](https://github.com/cwolock/survML) (development version).
+This repository contains code to reproduce the analyses in ["A framework for leveraging machine learning tools to estimate personalized survival curves"](https://arxiv.org/abs/2211.03031) by Wolock, Gilbert, Simon, and Carone appearing in the *Journal of Computational and Graphical Statistics*. All analyses were implemented using the `R` package `survML`, which is available on CRAN (stable release) and [here](https://github.com/cwolock/survML) (development version). Version 1.1.0 was used for this paper. 
 
 ## Appendix
 
@@ -18,11 +18,12 @@ The code depends on the following `R` packages:
 * `squash`: Available on CRAN.
 * `SuperLearner`: Available on CRAN.
 * `survival`: Available on CRAN.
-* `survML`: Available on CRAN.
+* `survML`: Available on CRAN. 
 * `survSuperLearner`: Available on Github at https://github.com/tedwestling/survSuperLearner.
 * `tidyverse`: Available on CRAN.
+* `xtable`: Available on CRAN.
 
-Note that `survSuperLearner` and `LTRCforests` are only used a comparator methods in the simulation studies. If you have difficulty installing them, you can simply leave those methods out. 
+Note that `survSuperLearner` and `LTRCforests` are only used as comparator methods in the simulation studies. If you have difficulty installing them, you can simply leave those methods out. 
 
 ### Simulations
 

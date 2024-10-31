@@ -1,5 +1,9 @@
+*.Rhistory
 *.rds
 *.out
 *.png
+*.pdf
 *.csv
 *.swp
+*.DS_Store
+*.html
